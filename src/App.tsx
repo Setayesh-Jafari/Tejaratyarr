@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import {
   Boxes, Workflow, Scale, Sparkles, FileCheck2, Globe2, Send, BarChart3, Database,
 } from 'lucide-react';
-import { ActiveView } from './types';
+import { ActiveView, isSettledStatus } from './types';
 import { HS_DISPUTE_SCENARIOS } from './data/hscodeScenarios';
 import { AppStoreProvider, useStore } from './store/AppStore';
 import { ToastHost, ViewSkeleton, FatalError } from './components/ui/Feedback';
@@ -31,7 +31,7 @@ const Workspace: React.FC = () => {
   const {
     ready, error, retry,
     inventory, suppliers,
-    addUnit, updateUnitStatus, saveAssessment,
+    addUnit, updateUnitStatus, patchUnit, saveAssessment,
   } = useStore();
 
   const [activeView, setActiveView] = useState<ActiveView>('inventory');
@@ -72,7 +72,7 @@ const Workspace: React.FC = () => {
   };
 
   /* شاخص‌های زنده برای سربرگ هر نما */
-  const activeShipments = inventory.filter((u) => u.status !== 'موجود در انبار (ترخیص شده)' && u.status !== 'رزرو مشتری / پیش‌فروش').length;
+  const activeShipments = inventory.filter((u) => !isSettledStatus(u.status)).length;
   const customsCount = inventory.filter((u) => u.status === 'در گمرک (در حال ترخیص)').length;
   const portfolioValue = inventory.reduce((s, u) => s + u.landedCostToman * u.stockQty, 0);
 
@@ -88,7 +88,7 @@ const Workspace: React.FC = () => {
             stats={[
               { label: 'پرونده فعال', value: activeShipments.toLocaleString('fa-IR'), tone: 'text-indigo-600' },
               { label: 'در گمرک', value: customsCount.toLocaleString('fa-IR'), tone: 'text-amber-600' },
-              { label: 'ارزش سبد', value: `${fmtBillion(portfolioValue)} B`, tone: 'text-emerald-600' },
+              { label: 'ارزش سبد', value: `${fmtBillion(portfolioValue)} میلیارد ت`, tone: 'text-emerald-600' },
             ]}
           />
         );
@@ -127,7 +127,7 @@ const Workspace: React.FC = () => {
         return (
           <PageHero
             icon={<FileCheck2 className="w-5 h-5" />}
-            eyebrow="ویزارد ۷ مرحله‌ای"
+            eyebrow="ویزارد ۴ مرحله‌ای"
             title="ارزیابی جامع امکان‌سنجی واردات"
             subtitle="تعرفه، تأمین‌کننده، بهای تمام‌شده و حاشیه سود — با موتور محاسباتی رسمی و آرشیو پرونده."
           />
@@ -157,7 +157,7 @@ const Workspace: React.FC = () => {
             eyebrow="تحلیل و مالی"
             title="داشبورد تحلیلی سبد وارداتی"
             subtitle="نمودارهای زنده از داده واقعی کارتابل + موتور بهای تمام‌شده و تنظیمات نرخ ارز."
-            stats={[{ label: 'ارزش سبد', value: `${fmtBillion(portfolioValue)} B`, tone: 'text-emerald-600' }]}
+            stats={[{ label: 'ارزش سبد', value: `${fmtBillion(portfolioValue)} میلیارد ت`, tone: 'text-emerald-600' }]}
           />
         );
       case 'provenance':
@@ -270,9 +270,9 @@ const Workspace: React.FC = () => {
                       <FileCheck2 className="w-7 h-7" />
                     </div>
                     <div className="max-w-md space-y-1.5">
-                      <h3 className="text-base font-black text-slate-800">سامانه ارزیابی جامع واردات و ترخیص (۷ مرحله‌ای)</h3>
+                      <h3 className="text-base font-black text-slate-800">سامانه ارزیابی جامع واردات و ترخیص (۴ مرحله‌ای)</h3>
                       <p className="text-xs text-slate-500 leading-relaxed">
-                        بررسی سودآوری، طبقه‌بندی تعرفه، گروه‌بندی کالایی صمت، اعتبارسنجی تأمین‌کننده خارجی و محاسبه بهای تمام‌شده.
+                        مشخصات کالا ← تفکیک تعرفه ← اعتبارسنجی تأمین‌کننده ← محاسبه بهای تمام‌شده و ثبت در کارتابل.
                       </p>
                     </div>
                     <button onClick={() => setIsAssessmentOpen(true)} className="tj-btn tj-btn-primary">
@@ -299,9 +299,11 @@ const Workspace: React.FC = () => {
       />
 
       <UnitDetailModal
+        key={selectedUnitLive?.id ?? 'none'}
         unit={selectedUnitLive}
         onClose={() => setSelectedUnit(null)}
         onUpdateStatus={updateUnitStatus}
+        onPatchUnit={patchUnit}
       />
 
       <AddUnitModal

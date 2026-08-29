@@ -115,6 +115,11 @@ async function startServer() {
     res.json(db.upsertSupplier({ ...existing, ...(req.body as Partial<SupplierRecord>), id: existing.id }));
   }));
 
+  app.delete('/api/suppliers/:id', wrap((req, res) => {
+    if (!db.deleteSupplier(req.params.id)) return bad(res, 404, 'تأمین‌کننده یافت نشد.');
+    res.json({ ok: true });
+  }));
+
   /* --------------------------- Assessments -------------------------- */
 
   app.get('/api/assessments', wrap((_req, res) => res.json(db.getAssessments())));

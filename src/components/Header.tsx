@@ -18,7 +18,7 @@ const TITLES: Record<ActiveView, { title: string; sub: string }> = {
   pipeline: { title: 'گردش کار پرونده‌ها', sub: 'ثبت سفارش ← ترانزیت ← گمرک ← انبار' },
   hscode_resolver: { title: 'تفکیک تعرفه (HS Code)', sub: 'دایرکتوری رسمی + پیشنهاد هوشمند' },
   intelligence: { title: 'کاوشگر هوش تجاری', sub: '۱۰ موتور استنادی تجارت خارجی' },
-  assessment: { title: 'ارزیابی جامع واردات', sub: 'ویزارد ۷ مرحله‌ای صمت و گمرک' },
+  assessment: { title: 'ارزیابی جامع واردات', sub: 'ویزارد ۴ مرحله‌ای صمت و گمرک' },
   sourcing: { title: 'اعتبارسنجی تأمین‌کنندگان', sub: 'Due Diligence و ریسک تحریم' },
   rfq: { title: 'استعلام قیمت (RFQ)', sub: 'پروفرما و اینکوترمز ۲۰۲۰' },
   analytics: { title: 'داشبورد تحلیلی و مالی', sub: 'نمودارهای سبد و بهای تمام‌شده' },
@@ -61,22 +61,24 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-2 md:gap-2.5">
-        {/* جستجو */}
-        <div className="relative hidden md:block">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="جستجو در کارگو، تعرفه، تأمین‌کننده…"
-            className="bg-slate-800/60 border border-slate-700/80 rounded-xl py-2 pr-9 pl-8 text-xs text-slate-100 placeholder-slate-500 w-48 lg:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:bg-slate-800 transition-all font-sans"
-          />
-          <Search className="w-3.5 h-3.5 text-slate-500 absolute right-3 top-2.5" />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute left-2.5 top-2 text-slate-500 hover:text-slate-300">
-              ✕
-            </button>
-          )}
-        </div>
+        {/* جستجو — فقط روی نمای کارتابل (محدوده‌ی واقعی آن) */}
+        {activeView === 'inventory' && (
+          <div className="relative hidden md:block">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="جستجو در کارتابل کارگو و موجودی…"
+              className="bg-slate-800/60 border border-slate-700/80 rounded-xl py-2 pr-9 pl-8 text-xs text-slate-100 placeholder-slate-500 w-48 lg:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:bg-slate-800 transition-all font-sans"
+            />
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute right-3 top-2.5" />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute left-2.5 top-2 text-slate-500 hover:text-slate-300">
+                ✕
+              </button>
+            )}
+          </div>
+        )}
 
         {/* نرخ ارز — نشانگر جهت تغییر با نرخ آزاد نسبت به نیما */}
         <div

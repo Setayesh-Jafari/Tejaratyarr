@@ -82,7 +82,7 @@ export const AiHsSuggestCard: React.FC<{ onUseCode?: (code: string) => void }> =
           {result.note && <p className="text-[10px] text-slate-400 leading-relaxed">{result.note}</p>}
           {result.suggestions.length === 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-800 leading-relaxed">
-              هیچ کد تعرفه‌ای با این توصیف تطبیق واژه‌ای نداشت. توصیف دقیق‌تری بنویسید (جنس الیاف، نوع بافت، کاربرد) یا از سربرگ «جستجوی آزاد در کل کتاب تعرفه» استفاده کنید.
+              هیچ کد تعرفه‌ای با این توصیف تطبیق واژه‌ای نداشت. توصیف دقیق‌تری بنویسید (جنس الیاف، نوع بافت، کاربرد) یا از «جستجوی آزاد در دایرکتوری و استعلام هوشمند» استفاده کنید.
             </div>
           )}
           {result.suggestions.map((s, i) => (

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { InventoryUnit } from '../types';
 import { matchesQuery } from '../lib/search';
+import { downloadCsv, toCsv } from '../lib/csv';
+import { fmtTomanSmart } from '../lib/format';
 import { Download, Eye, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
 
 interface InventoryTableProps {
@@ -77,10 +79,10 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
     const rows = filteredItems.map((item) => [
       item.id,
       item.vinOrCode,
-      `"${item.name}"`,
+      item.name,
       item.category,
-      `"${item.originCountry}"`,
-      `"${item.customsPort}"`,
+      item.originCountry,
+      item.customsPort,
       item.hsCode,
       item.orderRegCode,
       item.status,
@@ -89,18 +91,10 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
       item.costPriceUsd,
       item.landedCostToman,
       item.marketPriceToman,
-      `"${item.supplierName}"`,
+      item.supplierName,
     ]);
 
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `tejaratyar_cargo_inventory_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(`tejaratyar_cargo_inventory_${new Date().toISOString().slice(0, 10)}.csv`, toCsv(headers, rows));
   };
 
   return (
@@ -198,12 +192,10 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
 
                   <td className="px-4 py-3.5">
                     <div className="font-bold text-slate-900 font-mono">
-                      {item.marketPriceToman >= 1000 
-                        ? `${(item.marketPriceToman / 1000).toFixed(1)} میلیارد م.` 
-                        : `${item.marketPriceToman.toLocaleString('fa-IR')} م. تومان`}
+                      {fmtTomanSmart(item.marketPriceToman)}
                     </div>
                     <div className="text-[10px] text-slate-500 mt-0.5">
-                      خرید: ${item.costPriceUsd.toLocaleString()} | تمام‌شده: {item.landedCostToman >= 1000 ? `${(item.landedCostToman / 1000).toFixed(1)} م.م` : `${item.landedCostToman} م.ت`}
+                      خرید: ${item.costPriceUsd.toLocaleString('en-US')} | تمام‌شده: {fmtTomanSmart(item.landedCostToman)}
                     </div>
                   </td>
 
@@ -218,7 +210,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                       <span className="font-bold text-slate-800 text-[11px] font-mono">%{margin}</span>
                     </div>
                     <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">
-                      سود: {(item.marketPriceToman - item.landedCostToman) >= 1000 ? `${((item.marketPriceToman - item.landedCostToman) / 1000).toFixed(1)} م.م` : `${(item.marketPriceToman - item.landedCostToman).toFixed(1)} م.ت`}
+                      سود: {fmtTomanSmart(item.marketPriceToman - item.landedCostToman)}
                     </div>
                   </td>
 

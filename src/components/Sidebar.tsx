@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActiveView } from '../types';
+import { ActiveView, isSettledStatus } from '../types';
 import {
   Boxes, FileCheck2, Globe2, Send, Sparkles, X, Scale, Database,
   Workflow, BarChart3, ChevronLast, ChevronFirst, Cpu, ShieldCheck,
@@ -33,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { inventory, health, settings } = useStore();
   const [collapsed, setCollapsed] = useState(false);
 
-  const activeCount = inventory.filter((u) => u.status !== 'موجود در انبار (ترخیص شده)' && u.status !== 'رزرو مشتری / پیش‌فروش').length;
+  const activeCount = inventory.filter((u) => !isSettledStatus(u.status)).length;
   const customsCount = inventory.filter((u) => u.status === 'در گمرک (در حال ترخیص)').length;
 
   const groups: Array<{ title: string; items: NavItem[] }> = [
@@ -42,7 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { id: 'inventory', label: 'مدیریت کارگو و موجودی', hint: 'کارتابل انبار و پرونده‌ها', icon: Boxes, badge: () => `${activeCount.toLocaleString('fa-IR')} فعال` },
         { id: 'pipeline', label: 'گردش کار پرونده‌ها', hint: 'کانبان چرخه عمر واردات', icon: Workflow, badge: () => (customsCount > 0 ? `${customsCount.toLocaleString('fa-IR')} در گمرک` : null) },
-        { id: 'assessment', label: 'ارزیابی واردات کالا', hint: 'ویزارد ۷ مرحله‌ای', icon: FileCheck2, onClick: (go) => { go('assessment'); onOpenAssessment(); } },
+        { id: 'assessment', label: 'ارزیابی واردات کالا', hint: 'ویزارد ۴ مرحله‌ای', icon: FileCheck2, onClick: (go) => { go('assessment'); onOpenAssessment(); } },
         { id: 'rfq', label: 'استعلام قیمت (RFQ)', hint: 'مکاتبات خرید بین‌المللی', icon: Send },
       ],
     },

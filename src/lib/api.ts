@@ -40,7 +40,13 @@ export const api = {
     req<InventoryUnit>(`/inventory/${encodeURIComponent(id)}/status`, { method: 'POST', body: JSON.stringify({ status, note }) }),
   deleteUnit: (id: string) => req<{ ok: true }>(`/inventory/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
+  addEvent: (id: string, payload: { title: string; kind?: string; detail?: string }) =>
+    req<InventoryUnit>(`/inventory/${encodeURIComponent(id)}/events`, { method: 'POST', body: JSON.stringify(payload) }),
+
   upsertSupplier: (rec: SupplierRecord) => req<SupplierRecord>('/suppliers', { method: 'POST', body: JSON.stringify(rec) }),
+  patchSupplier: (id: string, patch: Partial<SupplierRecord>) =>
+    req<SupplierRecord>(`/suppliers/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(patch) }),
+  deleteSupplier: (id: string) => req<{ ok: true }>(`/suppliers/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   addAssessment: (a: TradeAssessmentDossier) => req<TradeAssessmentDossier>('/assessments', { method: 'POST', body: JSON.stringify(a) }),
   patchAssessment: (id: string, patch: Partial<TradeAssessmentDossier>) =>

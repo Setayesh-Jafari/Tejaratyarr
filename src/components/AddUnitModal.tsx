@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { InventoryUnit, ItemStatus, ProductCategory } from '../types';
+import { InventoryUnit, ItemStatus, ProductCategory, FxType, PRODUCT_CATEGORIES } from '../types';
 import { X, Plus, CheckCircle2, ShieldAlert, Anchor } from 'lucide-react';
 
 interface AddUnitModalProps {
@@ -29,7 +29,7 @@ export const AddUnitModal: React.FC<AddUnitModalProps> = ({
   const [marketPriceToman, setMarketPriceToman] = useState(5800);
   const [hsCode, setHsCode] = useState('8703.23.90');
   const [orderRegCode, setOrderRegCode] = useState('140398214');
-  const [fxType, setFxType] = useState('سامانه نیما / بازرگانی');
+  const [fxType, setFxType] = useState<FxType>('ارز نیمایی (سامانه نیما)');
   const [supplierName, setSupplierName] = useState('Euro Trade Direct GmbH');
 
   if (!isOpen) return null;
@@ -125,11 +125,9 @@ export const AddUnitModal: React.FC<AddUnitModalProps> = ({
                 onChange={(e) => setCategory(e.target.value as ProductCategory)}
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-semibold"
               >
-                <option value="خودرو و ماشین‌آلات صنعتی">خودرو و ماشین‌آلات صنعتی</option>
-                <option value="تجهیزات خورشیدی و برق">تجهیزات خورشیدی و برق</option>
-                <option value="فولاد و مواد اولیه صنعتی">فولاد و مواد اولیه صنعتی</option>
-                <option value="تجهیزات پزشکی و آزمایشگاهی">تجهیزات پزشکی و آزمایشگاهی</option>
-                <option value="کالاهای اساسی و کشاورزی">کالاهای اساسی و کشاورزی</option>
+                {PRODUCT_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
               </select>
             </div>
             <div className="space-y-1">

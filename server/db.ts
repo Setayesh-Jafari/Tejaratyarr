@@ -191,6 +191,14 @@ export const db = {
     flush();
     return rec;
   },
+  deleteSupplier(id: string): boolean {
+    const d = load();
+    const before = d.suppliers.length;
+    d.suppliers = d.suppliers.filter((s) => s.id !== id);
+    if (d.suppliers.length === before) return false;
+    flush();
+    return true;
+  },
 
   /* ---------- Assessments ---------- */
   getAssessments(): TradeAssessmentDossier[] {

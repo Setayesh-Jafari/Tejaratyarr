@@ -1,16 +1,18 @@
 /**
  * داشبورد تحلیلی و مالی — نمودارهای محاسبه‌شده از داده واقعی کارتابل
- * (هیچ عدد ثابتی در این صفحه hard-code نشده؛ همه از inventory زنده مشتق می‌شود)
+ * + شبیه‌ساز «چه‌اگر نرخ ارز تغییر کند» روی بهای تمام‌شده.
+ * (هیچ عدد ثابتی hard-code نشده؛ همه از inventory زنده مشتق می‌شود)
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ScatterChart, Scatter, ZAxis,
 } from 'recharts';
-import { PieChart as PieIcon, TrendingUp, Layers, Coins, Save } from 'lucide-react';
+import { PieChart as PieIcon, TrendingUp, Layers, Coins, Save, Activity, RefreshCw } from 'lucide-react';
 import { useStore } from '../store/AppStore';
 import { STATUS_FLOW } from '../types';
-import { fmtMillion, fmtBillion, fmtToman, fmtPct } from '../lib/format';
+import { fmtBillion, fmtPct, fmtTomanSmart } from '../lib/format';
+import { revaluePortfolio } from '../lib/fxRevaluation';
 
 const CAT_COLORS = ['#2563eb', '#059669', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#db2777'];
 
@@ -19,6 +21,18 @@ const toFa = (n: number): string => n.toLocaleString('fa-IR', { maximumFractionD
 export const AnalyticsDashboard: React.FC = () => {
   const { inventory, settings, saveSettings } = useStore();
   const [fxDraft, setFxDraft] = useState({ ...settings.fx });
+  const baseNima = settings.fx.usdNimaToman || 68000;
+  const [whatIfFx, setWhatIfFx] = useState<number>(baseNima);
+
+  /* با تغییر نرخ مرجع ذخیره‌شده، شبیه‌ساز روی نرخ جدید بنشیند */
+  useEffect(() => {
+    setWhatIfFx(settings.fx.usdNimaToman || 68000);
+  }, [settings.fx.usdNimaToman]);
+
+  const reval = useMemo(
+    () => revaluePortfolio(inventory, whatIfFx, settings),
+    [inventory, whatIfFx, settings]
+  );
 
   const stats = useMemo(() => {
     const totalCost = inventory.reduce((s, u) => s + u.landedCostToman * u.stockQty, 0);
@@ -71,6 +85,18 @@ export const AnalyticsDashboard: React.FC = () => {
     fxDraft.usdAzadToman !== settings.fx.usdAzadToman ||
     fxDraft.eurToman !== settings.fx.eurToman;
 
+  const minFx = Math.round(baseNima * 0.5);
+  const maxFx = Math.round(baseNima * 1.5);
+
+  const topMovers = useMemo(
+    () =>
+      reval.perUnit
+        .map((r) => ({ name: r.unit.name, qty: r.unit.stockQty, delta: r.deltaMillion * r.unit.stockQty }))
+        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+        .slice(0, 3),
+    [reval]
+  );
+
   return (
     <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-0.5">
       {/* KPIها */}
@@ -97,6 +123,106 @@ export const AnalyticsDashboard: React.FC = () => {
           <div className="text-2xl font-black font-mono text-slate-900 mt-1">{inventory.length.toLocaleString('fa-IR')}</div>
           <span className="text-[10px] text-slate-500">پرونده فعال در {stats.byCategory.length.toLocaleString('fa-IR')} دسته کالایی</span>
         </div>
+      </div>
+
+      {/* شبیه‌ساز چه‌اگر نرخ ارز */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h4 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <Activity className="w-3.5 h-3.5 text-blue-600" />
+            شبیه‌ساز «چه‌اگر نرخ ارز تغییر کند»
+          </h4>
+          {whatIfFx !== baseNima && (
+            <button
+              onClick={() => setWhatIfFx(baseNima)}
+              className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-bold"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> بازگشت به نرخ فعلی
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+          {/* اسلایدر نرخ */}
+          <div className="lg:col-span-2 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-500">نرخ فرضی دلار نیما (تومان)</span>
+              <input
+                type="number"
+                dir="ltr"
+                step={500}
+                min={1000}
+                value={whatIfFx}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setWhatIfFx(Number.isFinite(v) && v > 0 ? v : baseNima);
+                }}
+                className="w-28 text-xs font-mono font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none text-right"
+              />
+            </div>
+            <input
+              type="range"
+              dir="ltr"
+              min={minFx}
+              max={maxFx}
+              step={500}
+              value={whatIfFx}
+              onChange={(e) => setWhatIfFx(Number(e.target.value))}
+              className="w-full accent-blue-600"
+            />
+            <div className="flex justify-between text-[9px] text-slate-400 font-mono" dir="ltr">
+              <span>{minFx.toLocaleString('en-US')}</span>
+              <span className="text-blue-600 font-bold">{baseNima.toLocaleString('en-US')} (فعلی)</span>
+              <span>{maxFx.toLocaleString('en-US')}</span>
+            </div>
+          </div>
+
+          {/* نتایج */}
+          <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <span className="text-[10px] text-slate-500">بهای تمام‌شده فعلی</span>
+              <div className="text-lg font-black font-mono text-slate-900 mt-0.5" dir="ltr">{fmtBillion(reval.landedOldMillion)}</div>
+              <span className="text-[9px] text-slate-400">میلیارد تومان (ذخیره‌شده)</span>
+            </div>
+            <div className={`rounded-xl p-3 border ${reval.deltaMillion >= 0 ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50 border-emerald-200'}`}>
+              <span className="text-[10px] text-slate-500">با نرخ فرضی</span>
+              <div className={`text-lg font-black font-mono mt-0.5 ${reval.deltaMillion >= 0 ? 'text-rose-700' : 'text-emerald-700'}`} dir="ltr">{fmtBillion(reval.landedNewMillion)}</div>
+              <span className={`text-[9px] font-bold ${reval.deltaMillion >= 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                {reval.deltaMillion >= 0 ? '+' : '−'}{fmtTomanSmart(Math.abs(reval.deltaMillion))} نسبت به فعلی
+              </span>
+            </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <span className="text-[10px] text-slate-500">سود ناخالص با نرخ فرضی</span>
+              <div className={`text-lg font-black font-mono mt-0.5 ${reval.profitNewMillion >= 0 ? 'text-emerald-600' : 'text-rose-600'}`} dir="ltr">
+                {reval.profitNewMillion >= 0 ? '+' : ''}{fmtBillion(reval.profitNewMillion)}
+              </div>
+              <span className="text-[9px] text-slate-400">میلیارد تومان (فعلی: {fmtBillion(reval.profitOldMillion)})</span>
+            </div>
+            <div className="sm:col-span-3 bg-blue-50/60 border border-blue-100 rounded-xl p-3 flex items-center gap-3">
+              <Activity className="w-4 h-4 text-blue-600 shrink-0" />
+              <p className="text-[11px] text-slate-700 leading-relaxed">
+                <span className="font-bold">حساسیت سبد:</span> هر ۱۰۰۰ تومان افزایش نرخ نیما ≈{' '}
+                <span className="font-black text-blue-700">{fmtTomanSmart(reval.sensitivityPerThousandTomanMillion)}</span>{' '}
+                به بهای تمام‌شده‌ی کل اضافه می‌کند.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {topMovers.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2.5">
+            <span className="text-[10px] font-bold text-slate-500">بیشترین تأثیرپذیری:</span>
+            {topMovers.map((m) => (
+              <span key={m.name} className="text-[10px] bg-slate-100 border border-slate-200 rounded-lg px-2 py-1">
+                {m.name} <span className={`font-bold ${m.delta >= 0 ? 'text-rose-600' : 'text-emerald-600'}`}>{m.delta >= 0 ? '+' : '−'}{fmtTomanSmart(Math.abs(m.delta))}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
+        <p className="text-[10px] text-slate-400 leading-relaxed border-t border-slate-100 pt-2">
+          مفروضات شبیه‌سازی: سهم ارزی (CIF + حقوق ورودی + سود بازرگانی + مالیات) با نرخ جدید بازمحاسبه و سهم ریالی محلی (ترخیص‌کاری، حمل داخلی، کارمزد) ثابت نگه داشته می‌شود؛ نرخ تعرفه از دایرکتوری HS داخلی خوانده می‌شود و تغییر نرخ «موازی» فرض می‌شود (نسبت نیما/آزاد ثابت). این صرفاً تحلیل حساسیت است، نه پیش‌بینی رسمی نرخ.
+        </p>
       </div>
 
       {/* نمودارها */}
@@ -180,7 +306,7 @@ export const AnalyticsDashboard: React.FC = () => {
       {/* تنظیمات نرخ ارز */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <h4 className="text-xs font-bold text-slate-700">تنظیمات نرخ ارز مرجع <span className="text-slate-400 font-medium">(مبنای ماشین‌حساب بهای تمام‌شده)</span></h4>
+          <h4 className="text-xs font-bold text-slate-700">تنظیمات نرخ ارز مرجع <span className="text-slate-400 font-medium">(مبنای محاسبات جدید ویزارد و ماشین‌حساب)</span></h4>
           {fxDirty && (
             <button
               onClick={() => saveSettings({ fx: fxDraft })}
@@ -210,7 +336,7 @@ export const AnalyticsDashboard: React.FC = () => {
           ))}
         </div>
         <p className="text-[10px] text-slate-400 mt-2">
-          آخرین به‌روزرسانی: {new Date(settings.fx.updatedAt).toLocaleString('fa-IR')} — این نرخ‌ها فقط مرجع داخلی محاسبات هستند و از منبع رسمی نیما استعلام نمی‌شوند.
+          آخرین به‌روزرسانی: {new Date(settings.fx.updatedAt).toLocaleString('fa-IR')} — این نرخ‌ها فقط مبنای محاسبات <span className="font-bold text-slate-500">جدید</span> (ویزارد و ماشین‌حساب) هستند و بهای تمام‌شده‌ی تاریخی ذخیره‌شده در کارتابل را تغییر نمی‌دهند. برای دیدن اثر نرخ بر سبد موجود، از شبیه‌ساز «چه‌اگر» در بالای صفحه استفاده کنید.
         </p>
       </div>
     </div>

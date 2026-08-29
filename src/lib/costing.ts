@@ -66,6 +66,7 @@ export function computeLandedCost(input: CostingInput): LandedCostResult {
     landedPerUnitToman: landedTotal / qty,
     landedPerUnitMillionToman: landedTotal / qty / 1_000_000,
     customsOutlayToman: customsOutlay,
+    fxRateToman: fx,
   };
 }
 

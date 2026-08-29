@@ -4,9 +4,9 @@
  */
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowLeft, Clock, AlertTriangle, Warehouse, Ship, Landmark, FileSignature, Trash2, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Clock, AlertTriangle, Warehouse, Ship, Landmark, FileSignature, Trash2, ChevronDown, StickyNote } from 'lucide-react';
 import { useStore } from '../store/AppStore';
-import { STATUS_FLOW } from '../types';
+import { STATUS_FLOW, ALL_STATUSES } from '../types';
 import type { InventoryUnit, ItemStatus } from '../types';
 import { fmtToman, fmtMillion, daysSince, faTimeAgo, faDateShort } from '../lib/format';
 
@@ -23,8 +23,9 @@ const DEMURRAGE_DAYS = 25;
 const daysInStage = (u: InventoryUnit): number => daysSince(u.stageEnteredAt ?? u.createdAt);
 
 export const CargoPipeline: React.FC = () => {
-  const { inventory, updateUnitStatus, deleteUnit } = useStore();
+  const { inventory, updateUnitStatus, deleteUnit, addEvent } = useStore();
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
 
   const byColumn = useMemo(() => {
     const map = new Map<ItemStatus, InventoryUnit[]>();
@@ -130,21 +131,65 @@ export const CargoPipeline: React.FC = () => {
                           </div>
                         )}
 
-                        {/* تایم‌لاین */}
+                        {/* جزئیات: جابه‌جایی مستقیم + یادداشت + تایم‌لاین */}
                         {isOpen && (
                           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="overflow-hidden">
-                            <div className="border-t border-dashed border-slate-200 pt-2 space-y-1.5">
-                              {[...(u.events ?? [])].reverse().slice(0, 5).map((ev) => (
-                                <div key={ev.id} className="flex items-start gap-2 text-[10px]">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1 shrink-0" />
-                                  <div className="flex-1">
-                                    <p className="font-bold text-slate-700">{ev.title}</p>
-                                    {ev.detail && <p className="text-slate-400 leading-snug">{ev.detail}</p>}
+                            <div className="border-t border-dashed border-slate-200 pt-2 space-y-2">
+                              {/* جابه‌جایی مستقیم به هر مرحله */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-slate-500 shrink-0">جابه‌جایی مستقیم:</span>
+                                <select
+                                  value={u.status}
+                                  onChange={(e) => updateUnitStatus(u.id, e.target.value as ItemStatus)}
+                                  className="flex-1 text-[10px] font-bold bg-white border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-blue-400 focus:outline-none cursor-pointer"
+                                >
+                                  {ALL_STATUSES.map((s) => (
+                                    <option key={s} value={s}>{s}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {/* ثبت یادداشت عملیاتی */}
+                              <form
+                                onSubmit={(e) => {
+                                  e.preventDefault();
+                                  const t = noteText.trim();
+                                  if (!t) return;
+                                  addEvent(u.id, { title: t });
+                                  setNoteText('');
+                                }}
+                                className="flex items-center gap-1.5"
+                              >
+                                <StickyNote className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <input
+                                  value={noteText}
+                                  onChange={(e) => setNoteText(e.target.value)}
+                                  placeholder="یادداشت عملیاتی (مثلاً: هماهنگی با ترخیص‌کار انجام شد)…"
+                                  className="flex-1 text-[10px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:bg-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                />
+                                <button
+                                  type="submit"
+                                  disabled={!noteText.trim()}
+                                  className="text-[10px] font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-lg px-2.5 py-1.5 disabled:opacity-40 shrink-0 transition-colors"
+                                >
+                                  ثبت
+                                </button>
+                              </form>
+
+                              {/* تایم‌لاین */}
+                              <div className="space-y-1.5">
+                                {[...(u.events ?? [])].reverse().slice(0, 5).map((ev) => (
+                                  <div key={ev.id} className="flex items-start gap-2 text-[10px]">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1 shrink-0" />
+                                    <div className="flex-1">
+                                      <p className="font-bold text-slate-700">{ev.title}</p>
+                                      {ev.detail && <p className="text-slate-400 leading-snug">{ev.detail}</p>}
+                                    </div>
+                                    <span className="text-slate-400 shrink-0" title={faDateShort(ev.at)}>{faTimeAgo(ev.at)}</span>
                                   </div>
-                                  <span className="text-slate-400 shrink-0" title={faDateShort(ev.at)}>{faTimeAgo(ev.at)}</span>
-                                </div>
-                              ))}
-                              {(u.events ?? []).length === 0 && <p className="text-[10px] text-slate-400">رویدادی ثبت نشده است.</p>}
+                                ))}
+                                {(u.events ?? []).length === 0 && <p className="text-[10px] text-slate-400">رویدادی ثبت نشده است.</p>}
+                              </div>
                             </div>
                           </motion.div>
                         )}
@@ -165,7 +210,7 @@ export const CargoPipeline: React.FC = () => {
                           >
                             مرحله بعد <ArrowLeft className="w-3 h-3" />
                           </button>
-                          <button onClick={() => setExpanded(isOpen ? null : u.id)} className="text-slate-400 hover:text-slate-700 rounded-lg p-1.5 hover:bg-slate-100 transition-colors" title="تایم‌لاین">
+                          <button onClick={() => setExpanded(isOpen ? null : u.id)} className="text-slate-400 hover:text-slate-700 rounded-lg p-1.5 hover:bg-slate-100 transition-colors" title="جزئیات، یادداشت و جابه‌جایی">
                             <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                           </button>
                           <button onClick={() => { if (confirm(`حذف پرونده «${u.name}»؟`)) deleteUnit(u.id); }} className="text-slate-300 hover:text-rose-600 rounded-lg p-1.5 hover:bg-rose-50 transition-colors" title="حذف پرونده">

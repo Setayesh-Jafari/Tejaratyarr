@@ -12,7 +12,12 @@ interface LandedCostCalculatorProps {
   initial?: Partial<CostingInput>;
   sellPricePerUnitToman?: number;
   onSellPriceChange?: (v: number) => void;
-  onResult?: (result: ReturnType<typeof computeLandedCost>, qty: number) => void;
+  /** نتیجه و تحلیل حاشیه سود زنده — برای همگام‌سازی با والد (مثل حکم نهایی ویزارد) */
+  onResult?: (
+    result: ReturnType<typeof computeLandedCost>,
+    margin: ReturnType<typeof analyzeMargin>,
+    qty: number
+  ) => void;
   compact?: boolean;
 }
 
@@ -71,9 +76,9 @@ export const LandedCostCalculator: React.FC<LandedCostCalculatorProps> = ({
   const sensitivity = useMemo(() => fxSensitivity(input, input.fxRateToman), [input]);
 
   React.useEffect(() => {
-    onResult?.(result, input.qty);
+    onResult?.(result, margin, input.qty);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result]);
+  }, [result, margin]);
 
   return (
     <div className="space-y-4">

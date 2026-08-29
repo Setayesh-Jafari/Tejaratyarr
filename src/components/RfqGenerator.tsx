@@ -19,13 +19,21 @@ export const RfqGenerator: React.FC<RfqGeneratorProps> = ({ suppliers, activeSup
 
   const selectedSupplier = suppliers.find((s) => s.id === selectedSupplierId) || suppliers[0];
 
+  // پنجره‌ی تحویل پیشنهادی — محاسبه‌ی پویا بر اساس فصل جاری
+  const nextQuarter = (() => {
+    const now = new Date();
+    const q = Math.floor(now.getMonth() / 3) + 1;
+    const y = now.getFullYear();
+    return q === 4 ? `Q1/${y + 1}` : `Q${q + 1}/${y}`;
+  })();
+
   const generatedEmail = `To: ${selectedSupplier?.email || 'sales@supplier.com'}
 Attn: ${selectedSupplier?.contactPerson || 'International Export Dept.'} (${selectedSupplier?.name})
 Subject: Formal RFQ [Procurement ID: IR-RFQ-${Date.now().toString().slice(-6)}] - ${productTitle}
 
 Dear ${selectedSupplier?.contactPerson || 'International Export Team'},
 
-On behalf of Iranian Commercial & Import Directorate, we are issuing this formal Request for Quotation (RFQ) for the following commercial batch:
+On behalf of our import & sourcing operations, we are issuing this formal Request for Quotation (RFQ) for the following commercial batch:
 
 1. PRODUCT SPECIFICATIONS & TECHNICAL REQUIREMENTS:
    - Item Description: ${productTitle}
@@ -37,7 +45,7 @@ On behalf of Iranian Commercial & Import Directorate, we are issuing this formal
    - Target Order Volume: ${quantity}
    - Delivery Incoterms: ${incoterms}
    - Packing: Standard Export Sea-Worthy Palletized Crates with Moisture Protection
-   - Target Dispatch Window: Q3/Q4 2024
+   - Target Dispatch Window: ${nextQuarter}
    - Accepted Payment Terms: Irrevocable Documentary L/C or Direct Telegraphic Transfer (TT) via verified exchange channels (UAE / Oman / China)
 
 3. REQUIRED SUBMISSIONS IN YOUR PROFORMA:
@@ -50,9 +58,9 @@ On behalf of Iranian Commercial & Import Directorate, we are issuing this formal
 Thank you for your prompt cooperation.
 
 Best regards,
-Commercial & Sourcing Operations
-TejaratYar Global Trade Platform
-Email: procurement@tejaratyar-trade.ir`;
+Import & Sourcing Operations
+TejaratYar — Trade Workspace
+Email: sourcing@your-company.com`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedEmail);

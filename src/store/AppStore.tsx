@@ -33,6 +33,9 @@ interface AppStoreShape {
   updateUnitStatus: (id: string, status: InventoryUnit['status'], note?: string) => Promise<void>;
   patchUnit: (id: string, patch: Partial<InventoryUnit>) => Promise<void>;
   deleteUnit: (id: string) => Promise<void>;
+  addEvent: (id: string, payload: { title: string; detail?: string }) => Promise<void>;
+  upsertSupplier: (rec: SupplierRecord) => Promise<SupplierRecord>;
+  deleteSupplier: (id: string) => Promise<void>;
   saveAssessment: (a: TradeAssessmentDossier) => Promise<TradeAssessmentDossier>;
   saveSettings: (patch: Partial<AppSettings> & { fx?: Partial<AppSettings['fx']> }) => Promise<void>;
 }
@@ -134,6 +137,44 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [toast]);
 
+  const addEvent = useCallback(async (id: string, payload: { title: string; detail?: string }) => {
+    try {
+      const updated = await api.addEvent(id, payload);
+      setInventory((prev) => prev.map((it) => (it.id === id ? updated : it)));
+      toast('success', 'یادداشت در تایم‌لاین پرونده ثبت شد.');
+    } catch (e: any) {
+      toast('error', e?.message ?? 'ثبت یادداشت ناموفق بود.');
+    }
+  }, [toast]);
+
+  const upsertSupplier = useCallback(async (rec: SupplierRecord) => {
+    try {
+      const saved = await api.upsertSupplier(rec);
+      setSuppliers((prev) => {
+        const i = prev.findIndex((s) => s.id === saved.id);
+        if (i === -1) return [saved, ...prev];
+        const next = [...prev];
+        next[i] = saved;
+        return next;
+      });
+      toast('success', `تأمین‌کننده «${saved.name}» ذخیره شد.`);
+      return saved;
+    } catch (e: any) {
+      toast('error', e?.message ?? 'ذخیره تأمین‌کننده ناموفق بود.');
+      throw e;
+    }
+  }, [toast]);
+
+  const deleteSupplier = useCallback(async (id: string) => {
+    try {
+      await api.deleteSupplier(id);
+      setSuppliers((prev) => prev.filter((s) => s.id !== id));
+      toast('info', 'تأمین‌کننده از ماتریس حذف شد.');
+    } catch (e: any) {
+      toast('error', e?.message ?? 'حذف تأمین‌کننده ناموفق بود.');
+    }
+  }, [toast]);
+
   const saveAssessment = useCallback(async (a: TradeAssessmentDossier) => {
     const saved = await api.addAssessment(a);
     setAssessments((prev) => [saved, ...prev]);
@@ -154,8 +195,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     ready, error, retry,
     inventory, suppliers, assessments, settings, health,
     toasts, toast, dismissToast,
-    addUnit, updateUnitStatus, patchUnit, deleteUnit, saveAssessment, saveSettings,
-  }), [ready, error, retry, inventory, suppliers, assessments, settings, health, toasts, toast, dismissToast, addUnit, updateUnitStatus, patchUnit, deleteUnit, saveAssessment, saveSettings]);
+    addUnit, updateUnitStatus, patchUnit, deleteUnit, addEvent, upsertSupplier, deleteSupplier, saveAssessment, saveSettings,
+  }), [ready, error, retry, inventory, suppliers, assessments, settings, health, toasts, toast, dismissToast, addUnit, updateUnitStatus, patchUnit, deleteUnit, addEvent, upsertSupplier, deleteSupplier, saveAssessment, saveSettings]);
 
   return <AppStoreCtx.Provider value={value}>{children}</AppStoreCtx.Provider>;
 };

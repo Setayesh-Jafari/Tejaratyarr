@@ -7,6 +7,7 @@ import {
   AlertTriangle, 
   ShieldCheck, 
   HelpCircle, 
+  Info,
   Copy, 
   Send, 
   FileCheck2, 
@@ -163,6 +164,14 @@ export const TradeIntelligenceSearch: React.FC<TradeIntelligenceSearchProps> = (
 
   return (
     <div id="trade-intelligence-explorer" className="flex-1 flex flex-col min-h-0 overflow-hidden space-y-4 text-right">
+      {/* یادآوری صادقانه: اسناد این بخش نمونه/مرجع هستند، نه استعلام زنده */}
+      <div className="flex items-start gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2 text-[11px] text-indigo-900 flex-shrink-0">
+        <Info className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+        <span className="leading-relaxed">
+          اسناد این کاوشگر <strong>نمونه/مرجع</strong> هستند و به‌صورت زنده از موتورهای استنادی استعلام نمی‌شوند؛
+          پیش از هر تصمیم تجاری، نتایج را با منبع رسمی تطبیق دهید.
+        </span>
+      </div>
       {/* نوار جستجوی فشرده — هویت جدید */}
       <div className="tj-card p-4 flex-shrink-0 space-y-3">
         <div className="flex flex-col md:flex-row md:items-center gap-3">

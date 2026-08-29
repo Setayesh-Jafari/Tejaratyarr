@@ -1,106 +1,144 @@
-import React from 'react';
-import { TrendingUp, Award, ArrowUpRight } from 'lucide-react';
+/**
+ * کارت سلامت کارتابل — شاخص‌های عملیاتی زنده
+ * ------------------------------------------------------------------
+ * همه‌ی اعداد از داده‌ی واقعی inventory مشتق می‌شوند و هیچ عدد
+ * ثابت/نمایشی در این کامپوننت وجود ندارد.
+ */
+import React, { useMemo } from 'react';
+import { TrendingUp, AlertTriangle, PackageCheck } from 'lucide-react';
+import { useStore } from '../store/AppStore';
+import { STATUS_FLOW, isSettledStatus } from '../types';
+import type { InventoryUnit } from '../types';
+import { fmtBillion, fmtMillion, fmtPct, daysSince } from '../lib/format';
+
+/** آستانه هشدار معطل‌کاری در گمرک (روز) */
+const DEMURRAGE_DAYS = 25;
+
+const STATUS_META: Record<string, { label: string; dot: string; bar: string }> = {
+  'در انتظار تخصیص ارز و ثبت سفارش': { label: 'انتظار تخصیص ارز', dot: 'bg-violet-500', bar: 'bg-violet-500' },
+  'در حال ترانزیت بین‌المللی': { label: 'ترانزیت بین‌المللی', dot: 'bg-sky-500', bar: 'bg-sky-500' },
+  'در گمرک (در حال ترخیص)': { label: 'در گمرک', dot: 'bg-amber-500', bar: 'bg-amber-500' },
+  'موجود در انبار (ترخیص شده)': { label: 'انبار و آماده فروش', dot: 'bg-emerald-500', bar: 'bg-emerald-500' },
+};
 
 export const PerformanceSection: React.FC = () => {
-  const trendBars = [
-    { label: 'هفته ۱', newH: '45%', preH: '30%', val: '۴۲۰ میلیون تومان' },
-    { label: 'هفته ۲', newH: '70%', preH: '55%', val: '۶۸۰ میلیون تومان' },
-    { label: 'هفته ۳', newH: '60%', preH: '40%', val: '۵۴۰ میلیون تومان' },
-    { label: 'هفته ۴', newH: '85%', preH: '65%', val: '۸۹۰ میلیون تومان' },
-    { label: 'هفته ۵', newH: '95%', preH: '50%', val: '۱.۱ میلیارد تومان' },
-    { label: 'هفته ۶', newH: '75%', preH: '60%', val: '۷۲۰ میلیون تومان' },
-    { label: 'هفته ۷', newH: '90%', preH: '70%', val: '۹۶۰ میلیون تومان' },
-  ];
+  const { inventory } = useStore();
+
+  const stats = useMemo(() => {
+    const valueOf = (u: InventoryUnit) => u.landedCostToman * u.stockQty;
+    const totalValue = inventory.reduce((s, u) => s + valueOf(u), 0);
+    const totalMarket = inventory.reduce((s, u) => s + u.marketPriceToman * u.stockQty, 0);
+
+    const byStatus = STATUS_FLOW.map((status) => {
+      const items = inventory.filter(
+        (u) => u.status === status || (status === 'موجود در انبار (ترخیص شده)' && u.status === 'رزرو مشتری / پیش‌فروش')
+      );
+      return { status, count: items.length, value: items.reduce((s, u) => s + valueOf(u), 0) };
+    });
+
+    const customsItems = inventory.filter((u) => u.status === 'در گمرک (در حال ترخیص)');
+    const stuckValue = customsItems
+      .filter((u) => daysSince(u.stageEnteredAt ?? u.createdAt) > DEMURRAGE_DAYS)
+      .reduce((s, u) => s + valueOf(u), 0);
+
+    const activeCount = inventory.filter((u) => !isSettledStatus(u.status)).length;
+    const readyCount = inventory.length - activeCount;
+    const marginPct = totalMarket > 0 ? ((totalMarket - totalValue) / totalMarket) * 100 : 0;
+
+    return { totalValue, totalMarket, byStatus, stuckValue, activeCount, readyCount, marginPct, customsCount: customsItems.length };
+  }, [inventory]);
+
+  const maxValue = Math.max(1, ...stats.byStatus.map((s) => s.value));
 
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-auto lg:h-48 flex-shrink-0">
-      {/* Sales / Trade Trend Bar Card */}
-      <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between">
+    <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-shrink-0">
+      {/* توزیع ارزش سبد بر اساس مرحله چرخه عمر (زنده) */}
+      <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
             <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
               <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
-              <span>روند حجم واردات و سرعت ترخیص کارگوها (۳۰ روز اخیر)</span>
+              <span>توزیع ارزش بهای تمام‌شده بر اساس مرحله چرخه عمر</span>
             </h4>
-            <p className="text-[10px] text-slate-400">حجم تجمیعی سفارش‌های گشایش‌یافته در مقایسه با کارگوهای تخلیه و ترخیص‌شده</p>
+            <p className="text-[10px] text-slate-400">ارزش زنده سبد بر اساس وضعیت هر پرونده در کارتابل (میلیون تومان)</p>
           </div>
-          <div className="flex items-center gap-3 text-[10px] font-bold">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-              <span className="text-slate-600">واردات مستقیم جدید</span>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-slate-300"></span>
-              <span className="text-slate-600">ترخیص‌شده انبار گمرک</span>
-            </span>
+          <div className="flex items-center gap-2.5 text-[9px] font-bold text-slate-500">
+            {STATUS_FLOW.map((s) => (
+              <span key={s} className="flex items-center gap-1">
+                <span className={`w-2 h-2 rounded-full ${STATUS_META[s].dot}`}></span>
+                {STATUS_META[s].label}
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* High Density Bar visualization */}
-        <div className="flex-1 flex items-end gap-3 pt-3 pb-1 min-h-[90px]">
-          {trendBars.map((bar, idx) => (
-            <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group">
-              <div className="w-full flex items-end justify-center gap-1 h-full pb-1">
-                <div
-                  className="w-1/2 bg-blue-500 rounded-t transition-all duration-300 group-hover:bg-blue-600 relative cursor-pointer"
-                  style={{ height: bar.newH }}
-                  title={`واردات: ${bar.val}`}
-                ></div>
-                <div
-                  className="w-1/2 bg-slate-200 rounded-t transition-all duration-300 group-hover:bg-slate-300 cursor-pointer"
-                  style={{ height: bar.preH }}
-                  title={`موجودی ترخیص`}
-                ></div>
+        <div className="flex-1 space-y-3 pt-4 min-h-[112px]">
+          {stats.byStatus.map((s) => {
+            const meta = STATUS_META[s.status];
+            const pct = Math.max(2, Math.min(100, Math.round((s.value / maxValue) * 100)));
+            return (
+              <div key={s.status}>
+                <div className="flex items-center justify-between text-[10px] mb-1">
+                  <span className="font-bold text-slate-600">{meta.label}</span>
+                  <span className="font-mono text-slate-500">
+                    {s.count.toLocaleString('fa-IR')} پرونده · {fmtMillion(s.value)} م.ت
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div className={`${meta.bar} h-2 rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
+                </div>
               </div>
-              <span className="text-[10px] font-bold text-slate-400 mt-0.5">{bar.label}</span>
-            </div>
-          ))}
+            );
+          })}
+        </div>
+
+        <div className="pt-3 mt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 flex-wrap gap-1">
+          <span>مجموع بهای تمام‌شده سبد: <strong className="font-mono text-slate-800">{fmtBillion(stats.totalValue)} میلیارد ت</strong></span>
+          <span>ارزش روز بازار: <strong className="font-mono text-emerald-700">{fmtBillion(stats.totalMarket)} میلیارد ت</strong></span>
         </div>
       </div>
 
-      {/* Dealer Performance Index Dark Card */}
+      {/* کارت سلامت کارتابل (زنده) */}
       <div className="bg-[#1E293B] rounded-2xl p-4 shadow-xs text-white flex flex-col justify-between border border-slate-700/60">
-        <div className="flex items-start justify-between">
-          <div>
-            <h4 className="text-[10px] font-bold text-slate-400 mb-0.5 tracking-wider flex items-center gap-1">
-              <Award className="w-3 h-3 text-amber-400" />
-              شاخص سلامت بازرگانی و ترخیص گمرکی
-            </h4>
-            <div className="flex items-baseline gap-2">
-              <div className="text-3xl font-black text-white font-mono">۹۴.۸</div>
-              <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-0.5">
-                <ArrowUpRight className="w-3 h-3" /> +۳.۲ امتیاز
-              </span>
-            </div>
+        <div>
+          <h4 className="text-[10px] font-bold text-slate-400 mb-0.5 tracking-wider flex items-center gap-1">
+            <PackageCheck className="w-3 h-3 text-emerald-400" />
+            کارتابل در یک نگاه
+          </h4>
+          <div className="flex items-baseline gap-2">
+            <div className="text-3xl font-black text-white font-mono">{stats.activeCount.toLocaleString('fa-IR')}</div>
+            <span className="text-[10px] text-slate-400 font-bold">پرونده فعال</span>
           </div>
-          <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold px-2 py-0.5 rounded-full">
-            رتبه الف بازرگان
-          </span>
         </div>
 
         <div className="space-y-2 mt-2">
-          <div>
-            <div className="flex justify-between items-center text-[10px] font-medium mb-1">
-              <span className="text-slate-300">نرخ قبولی اسناد در اظهار گمرکی (EPL)</span>
-              <span className="text-emerald-400 font-bold font-mono">۹۸٪</span>
-            </div>
-            <div className="w-full bg-slate-700/80 h-1.5 rounded-full overflow-hidden">
-              <div className="bg-emerald-400 h-1.5 rounded-full" style={{ width: '98%' }}></div>
-            </div>
+          <div className="flex justify-between items-center text-[10px] font-medium">
+            <span className="text-slate-300">پرونده در گمرک</span>
+            <span className="text-amber-300 font-bold font-mono">{stats.customsCount.toLocaleString('fa-IR')}</span>
           </div>
-
-          <div>
-            <div className="flex justify-between items-center text-[10px] font-medium mb-1">
-              <span className="text-slate-300">سرعت تأمین و تخصیص ارز صمت / نیما</span>
-              <span className="text-blue-400 font-bold font-mono">۸۶.۴٪</span>
-            </div>
-            <div className="w-full bg-slate-700/80 h-1.5 rounded-full overflow-hidden">
-              <div className="bg-blue-400 h-1.5 rounded-full" style={{ width: '86.4%' }}></div>
-            </div>
+          <div className="flex justify-between items-center text-[10px] font-medium">
+            <span className="text-slate-300">آماده فروش (انبار/رزرو)</span>
+            <span className="text-emerald-300 font-bold font-mono">{stats.readyCount.toLocaleString('fa-IR')}</span>
+          </div>
+          <div className="flex justify-between items-center text-[10px] font-medium">
+            <span className="text-slate-300">حاشیه سود ناخالص سبد</span>
+            <span className="text-blue-300 font-bold font-mono">{fmtPct(stats.marginPct)}</span>
+          </div>
+          <div className="flex justify-between items-center text-[10px] font-medium">
+            <span className="text-slate-300">ارزش بهای تمام‌شده</span>
+            <span className="text-slate-100 font-bold font-mono">{fmtBillion(stats.totalValue)} م.ت</span>
           </div>
         </div>
+
+        {stats.stuckValue > 0 && (
+          <div className="mt-3 flex items-start gap-1.5 text-[10px] text-rose-200 bg-rose-500/10 border border-rose-500/30 rounded-lg px-2.5 py-2 leading-relaxed">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-300" />
+            <span>
+              ریسک معطل‌کاری: {fmtMillion(stats.stuckValue)} م.ت سرمایه بیش از {DEMURRAGE_DAYS.toLocaleString('fa-IR')} روز در گمرک
+            </span>
+          </div>
+        )}
       </div>
     </section>
   );
 };
-
