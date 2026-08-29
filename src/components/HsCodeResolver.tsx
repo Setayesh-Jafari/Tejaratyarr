@@ -5,6 +5,7 @@ import {
 } from '../types';
 import { HS_DISPUTE_SCENARIOS } from '../data/hscodeScenarios';
 import { HS_CODE_DIRECTORY, CATEGORIES_WITH_COUNTS, HsCodeDatabaseEntry } from '../data/hscodeDirectory';
+import { matchesQuery } from '../lib/search';
 import { AiHsSuggestCard } from './AiAssist';
 import { 
   AlertTriangle, 
@@ -73,7 +74,7 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
     );
   }, [currentScenario, selectedCandidateCode]);
 
-  // Directory Search Filtering
+  // Directory Search Filtering — تطبیق واژه‌محور (مرز کلمه، نه زیررشته)
   const filteredDirectory = useMemo(() => {
     return HS_CODE_DIRECTORY.filter((entry) => {
       // Category filter
@@ -81,11 +82,9 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
         selectedDirectoryCategory === 'همه دسته‌بندی‌ها' || 
         entry.category === selectedDirectoryCategory;
 
-      // Text search
+      // Text search — واژه‌کامل/پیشوندی با نرمال‌سازی فارسی
       let matchesText = true;
       if (directorySearch.trim()) {
-        const q = directorySearch.toLowerCase().trim();
-        const tokens = q.split(/\s+/);
         const corpus = [
           entry.code,
           entry.titleFa,
@@ -98,9 +97,9 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
           ...entry.sampleProducts,
           ...entry.mandatoryPermits,
           ...entry.allowedFxTypes
-        ].join(' ').toLowerCase();
+        ].join(' ');
 
-        matchesText = tokens.every(t => corpus.includes(t));
+        matchesText = matchesQuery(directorySearch, corpus);
       }
 
       return matchesCategory && matchesText;

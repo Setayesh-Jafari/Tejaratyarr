@@ -80,6 +80,11 @@ export const AiHsSuggestCard: React.FC<{ onUseCode?: (code: string) => void }> =
       {result && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
           {result.note && <p className="text-[10px] text-slate-400 leading-relaxed">{result.note}</p>}
+          {result.suggestions.length === 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-800 leading-relaxed">
+              هیچ کد تعرفه‌ای با این توصیف تطبیق واژه‌ای نداشت. توصیف دقیق‌تری بنویسید (جنس الیاف، نوع بافت، کاربرد) یا از سربرگ «جستجوی آزاد در کل کتاب تعرفه» استفاده کنید.
+            </div>
+          )}
           {result.suggestions.map((s, i) => (
             <div key={s.code} className="bg-white border border-slate-200 rounded-xl p-3 space-y-2">
               <div className="flex items-center justify-between gap-2 flex-wrap">

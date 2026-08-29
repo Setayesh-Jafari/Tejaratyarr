@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { InventoryUnit } from '../types';
+import { matchesQuery } from '../lib/search';
 import { Download, Eye, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
 
 interface InventoryTableProps {
@@ -22,17 +23,16 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
     'فولاد و مواد اولیه صنعتی',
     'تجهیزات پزشکی و آزمایشگاهی',
     'کالاهای اساسی و کشاورزی',
+    'منسوجات و پوشاک',
   ];
 
   const filteredItems = inventory.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.vinOrCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.supplierName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.customsPort.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.hsCode.includes(searchQuery) ||
-      item.orderRegCode.includes(searchQuery);
+    // جستجوی واژه‌محور (مرز کلمه) روی کل شناسه‌های پرونده
+    const corpus = [
+      item.name, item.vinOrCode, item.sku, item.supplierName,
+      item.customsPort, item.hsCode, item.orderRegCode, item.category,
+    ].join(' ');
+    const matchesSearch = !searchQuery.trim() || matchesQuery(searchQuery, corpus);
 
     const matchesCategory = selectedCategory === 'همه' || item.category === selectedCategory;
 

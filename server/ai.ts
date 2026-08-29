@@ -7,6 +7,7 @@
  */
 import { GoogleGenAI, Type } from '@google/genai';
 import { HS_CODE_DIRECTORY } from '../src/data/hscodeDirectory';
+import { matchScore } from '../src/lib/search';
 import type { AiHsSuggestion, AiSupplierReport } from '../src/types';
 
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
@@ -42,21 +43,14 @@ export interface HsSuggestReq {
   category?: string;
 }
 
-/** جستجوی قاعده‌محور روی دایرکتوری تعرفه — هم fallback و هم زمینه برای مدل */
+/** جستجوی قاعده‌محور روی دایرکتوری تعرفه — هم fallback و هم زمینه برای مدل
+ *  تطبیق واژه‌محور با مرز کلمه (مشکل «پارچه» ↔ «یکپارچه» حل شده است) */
 export function localHsSearch(query: string, category?: string, limit = 6): AiHsSuggestion[] {
-  const tokens = query
-    .replace(/[().,/؛،:«»"]/g, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length > 1);
-
   const scored = HS_CODE_DIRECTORY.map((entry) => {
-    const hay = `${entry.titleFa} ${entry.titleEn} ${entry.sampleProducts.join(' ')} ${entry.specifications} ${entry.category}`;
-    let score = 0;
-    for (const t of tokens) {
-      if (hay.includes(t)) score += t.length >= 4 ? 3 : 2;
-      if (entry.titleEn.toLowerCase().includes(t.toLowerCase())) score += 2;
-    }
-    if (category && entry.category === category) score += 4;
+    const hay = `${entry.titleFa} ${entry.titleEn} ${entry.sampleProducts.join(' ')} ${entry.specifications} ${entry.category} ${entry.code}`;
+    // امتیاز واژه‌محور؛ صفر = عدم تطبیق (توکن ناقص تطبیق‌نیافته کل پرس‌وجو را رد می‌کند)
+    let score = matchScore(query, hay);
+    if (score > 0 && category && entry.category === category) score += 4;
     return { entry, score };
   })
     .filter((s) => s.score > 0)
