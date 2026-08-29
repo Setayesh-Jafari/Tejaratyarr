@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { SupplierRecord } from '../types';
+import { AiSupplierCheckCard } from './AiAssist';
 import { 
   ShieldCheck, 
   CheckCircle2, 
@@ -257,6 +258,11 @@ export const SupplierEvaluation: React.FC<SupplierEvaluationProps> = ({
 
       {/* Grid of Supplier Cards */}
       <div className="flex-1 p-4 md:p-5 overflow-y-auto grid grid-cols-1 xl:grid-cols-2 gap-4 bg-slate-50/50">
+        {/* تحلیل هوشمند ریسک تأمین‌کننده */}
+        <div className="xl:col-span-2">
+          <AiSupplierCheckCard />
+        </div>
+
         {filteredSuppliers.length === 0 ? (
           <div className="col-span-full bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-xl">

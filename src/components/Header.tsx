@@ -1,6 +1,7 @@
 import React from 'react';
-import { Search, Plus, Sparkles, Menu } from 'lucide-react';
+import { Search, Plus, Sparkles, Menu, Cpu, Coins } from 'lucide-react';
 import { ActiveView } from '../types';
+import { useStore } from '../store/AppStore';
 
 interface HeaderProps {
   activeView: ActiveView;
@@ -21,10 +22,14 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleMobileMenu,
   totalUnits,
 }) => {
+  const { health, settings } = useStore();
+
   const getTitle = () => {
     switch (activeView) {
       case 'inventory':
         return 'میز کار مدیریت کارگو و موجودی انبار';
+      case 'pipeline':
+        return 'گردش کار و چرخه‌ی عمر پرونده‌های وارداتی (ثبت سفارش → ترانزیت → گمرک → انبار)';
       case 'intelligence':
         return 'پایگاه هوش تجاری و جستجوی ۶ گانه (Apify, Baidu, Trade Map...)';
       case 'sourcing':
@@ -34,7 +39,7 @@ export const Header: React.FC<HeaderProps> = ({
       case 'rfq':
         return 'مرکز صدور استعلام قیمت بین‌المللی و مکاتبات خرید (RFQ)';
       case 'analytics':
-        return 'دفتر کل مالی و محاسبه بهای تمام‌شده ترخیص کالا (Landed Cost)';
+        return 'داشبورد تحلیلی، نمودارهای سبد و محاسبه بهای تمام‌شده ترخیص (Landed Cost)';
       default:
         return 'سامانه بازرگانی تجارت‌یار';
     }
@@ -57,17 +62,41 @@ export const Header: React.FC<HeaderProps> = ({
         <div>
           <h2 className="text-xs md:text-base font-bold text-slate-800 tracking-tight line-clamp-1">{getTitle()}</h2>
           <div className="flex lg:hidden items-center gap-1 text-[10px] text-slate-500 font-semibold mt-0.5">
-            <span>تجارت‌یار — نسخه بازرگان</span>
+            <span>تجارت‌یار — نسخه ۲ حرفه‌ای</span>
           </div>
         </div>
 
         <div className="hidden sm:flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>سامانه فعال ({totalUnits} ردیف کالا)</span>
+          <span>سامانه فعال ({totalUnits.toLocaleString('fa-IR')} ردیف کالا)</span>
         </div>
       </div>
 
       <div className="flex items-center gap-2 md:gap-3">
+        {/* نرخ ارز مرجع */}
+        <div className="hidden xl:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5" title="نرخ‌های مرجع داخلی — قابل ویرایش در داشبورد تحلیلی">
+          <Coins className="w-3.5 h-3.5 text-amber-500" />
+          <div className="text-[10px] leading-tight">
+            <span className="text-slate-400 block">دلار نیما / آزاد</span>
+            <span className="font-mono font-bold text-slate-700" dir="ltr">
+              {settings.fx.usdNimaToman.toLocaleString('fa-IR')} / {settings.fx.usdAzadToman.toLocaleString('fa-IR')}
+            </span>
+          </div>
+        </div>
+
+        {/* وضعیت هوش مصنوعی */}
+        <div
+          className={`hidden md:flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11px] font-bold border ${
+            health?.aiEnabled
+              ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+              : 'bg-amber-50 text-amber-800 border-amber-200'
+          }`}
+          title={health?.aiEnabled ? `مدل ${health.model} روی سرور فعال است` : 'برای فعال‌سازی، GEMINI_API_KEY را در فایل env سرور تنظیم کنید'}
+        >
+          <Cpu className="w-3.5 h-3.5" />
+          <span>{health?.aiEnabled ? `AI: ${health.model}` : 'AI: موتور محلی'}</span>
+        </div>
+
         {/* Search Box on desktop */}
         <div className="relative hidden md:block">
           <input
@@ -113,5 +142,3 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
-
-

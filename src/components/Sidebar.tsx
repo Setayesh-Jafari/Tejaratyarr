@@ -1,17 +1,19 @@
 import React from 'react';
 import { ActiveView } from '../types';
-import { 
-  Boxes, 
-  FileCheck2, 
-  Globe2, 
-  Calculator, 
-  Send, 
+import {
+  Boxes,
+  FileCheck2,
+  Globe2,
+  Send,
   ShieldCheck,
   Sparkles,
   X,
   Scale,
-  Database
+  Database,
+  Workflow,
+  BarChart3
 } from 'lucide-react';
+import { useStore } from '../store/AppStore';
 
 interface SidebarProps {
   activeView: ActiveView;
@@ -28,18 +30,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen = false,
   onCloseMobile,
 }) => {
+  const { inventory, health } = useStore();
+
+  const activeCount = inventory.filter((u) => u.status !== 'موجود در انبار (ترخیص شده)' && u.status !== 'رزرو مشتری / پیش‌فروش').length;
+  const customsCount = inventory.filter((u) => u.status === 'در گمرک (در حال ترخیص)').length;
+
   const navItems = [
     {
       id: 'inventory' as ActiveView,
       label: 'مدیریت کارگو و موجودی انبار',
       icon: Boxes,
-      badge: '۸ محموله فعال',
+      badge: `${activeCount.toLocaleString('fa-IR')} محموله فعال`,
+    },
+    {
+      id: 'pipeline' as ActiveView,
+      label: 'گردش کار و چرخه عمر پرونده',
+      icon: Workflow,
+      badge: customsCount > 0 ? `${customsCount.toLocaleString('fa-IR')} در گمرک` : 'بدون انسداد',
     },
     {
       id: 'hscode_resolver' as ActiveView,
       label: 'تفکیک و انتخاب تعرفه (HS Code)',
       icon: Scale,
-      badge: 'رفع خطای ماده ۱۰۸',
+      badge: 'هوشمند + AI',
     },
     {
       id: 'intelligence' as ActiveView,
@@ -71,8 +84,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'analytics' as ActiveView,
-      label: 'محاسبه بهای تمام‌شده و مالی (Landed)',
-      icon: Calculator,
+      label: 'داشبورد تحلیلی و بهای تمام‌شده',
+      icon: BarChart3,
       badge: 'نیما / آزاد',
     },
     {
@@ -108,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div>
               <div className="text-white font-bold text-sm tracking-tight flex items-center gap-2">
                 <span>تجارت‌یار</span>
-                <span className="text-[10px] font-mono text-blue-400 bg-blue-500/20 px-1.5 py-0.5 rounded border border-blue-500/30">نسخه بازرگان</span>
+                <span className="text-[10px] font-mono text-blue-400 bg-blue-500/20 px-1.5 py-0.5 rounded border border-blue-500/30">نسخه ۲ حرفه‌ای</span>
               </div>
               <div className="text-[10px] text-slate-400 font-medium">سامانه هوشمند واردات و ترخیص</div>
             </div>

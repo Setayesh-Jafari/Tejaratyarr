@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { 
   HsDisputeScenario, 
-  HsCodeCandidate, 
   VerificationState 
 } from '../types';
 import { HS_DISPUTE_SCENARIOS } from '../data/hscodeScenarios';
 import { HS_CODE_DIRECTORY, CATEGORIES_WITH_COUNTS, HsCodeDatabaseEntry } from '../data/hscodeDirectory';
+import { AiHsSuggestCard } from './AiAssist';
 import { 
   AlertTriangle, 
   CheckCircle2, 
@@ -37,6 +37,11 @@ interface HsCodeResolverProps {
   onSelectFinalCode?: (code: string, desc: string, duty: number) => void;
 }
 
+// کد تعرفه پیشنهادی سناریو: کدی از میان کدهای رقیب که پرچم isRecommended دارد
+const getRecommendedCode = (scenario: HsDisputeScenario): string => {
+  return scenario.competingCodes.find((c) => c.isRecommended)?.code ?? scenario.competingCodes[0].code;
+};
+
 export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCode }) => {
   // Navigation mode: 'interactive_scenarios' (dispute scenarios) vs 'comprehensive_directory' (searchable tariff book)
   const [viewMode, setViewMode] = useState<'interactive_scenarios' | 'comprehensive_directory'>('interactive_scenarios');
@@ -44,7 +49,7 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
   // Scenario state
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(HS_DISPUTE_SCENARIOS[0].id);
   const [selectedCandidateCode, setSelectedCandidateCode] = useState<string>(
-    HS_DISPUTE_SCENARIOS[0].recommendedCode
+    getRecommendedCode(HS_DISPUTE_SCENARIOS[0])
   );
   const [activeTab, setActiveTab] = useState<'comparison' | 'decision_tree' | 'legal_notes'>('comparison');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -63,7 +68,7 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
   const selectedCodeObj = useMemo(() => {
     return (
       currentScenario.competingCodes.find((c) => c.code === selectedCandidateCode) ||
-      currentScenario.competingCodes.find((c) => c.code === currentScenario.recommendedCode) ||
+      currentScenario.competingCodes.find((c) => c.code === getRecommendedCode(currentScenario)) ||
       currentScenario.competingCodes[0]
     );
   }, [currentScenario, selectedCandidateCode]);
@@ -125,6 +130,9 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
 
   return (
     <div id="hs-code-resolver-module" className="space-y-4 text-right">
+      {/* دستیار هوشمند پیشنهاد تعرفه */}
+      <AiHsSuggestCard />
+
       {/* Header Banner */}
       <div className="bg-gradient-to-l from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 shadow-sm border border-slate-800 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -484,7 +492,7 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
                     key={sc.id}
                     onClick={() => {
                       setSelectedScenarioId(sc.id);
-                      setSelectedCandidateCode(sc.recommendedCode);
+                      setSelectedCandidateCode(getRecommendedCode(sc));
                     }}
                     className={`p-3 rounded-xl border text-right transition-all flex flex-col justify-between space-y-2 ${
                       isSelected
@@ -502,12 +510,12 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
                           ریسک بالا
                         </span>
                       </div>
-                      <h4 className="text-xs font-bold leading-snug line-clamp-2">{sc.productName}</h4>
+                      <h4 className="text-xs font-bold leading-snug line-clamp-2">{sc.productNameFa}</h4>
                     </div>
 
                     <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200/60">
                       <span>کدهای درگیر: {sc.competingCodes.length} تعرفه</span>
-                      <span className="font-mono text-indigo-700 font-bold">{sc.recommendedCode}</span>
+                      <span className="font-mono text-indigo-700 font-bold">{getRecommendedCode(sc)}</span>
                     </div>
                   </button>
                 );
