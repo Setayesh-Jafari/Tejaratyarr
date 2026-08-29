@@ -73,7 +73,7 @@ function seed(): DbShape {
     settings: {
       fx: { usdNimaToman: 68000, usdAzadToman: 92500, eurToman: 76500, updatedAt: new Date().toISOString() },
       vatDefaultPct: 10,
-      orgName: 'شرکت بازرگانی بین‌المللی آریا',
+      orgName: 'ستایش جعفری',
     },
   };
 }

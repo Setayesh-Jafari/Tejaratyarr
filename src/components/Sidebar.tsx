@@ -168,10 +168,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
           {!collapsed && (
             <div className="rounded-2xl bg-slate-950/50 border tj-chrome-line p-2.5 flex items-center gap-2.5">
-              <div className="tj-grad w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-[10px] shrink-0">آ</div>
+              <div className="tj-grad w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-[10px] shrink-0">س</div>
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] text-white font-bold truncate leading-tight">{settings.orgName}</p>
-                <p className="text-[9px] text-slate-400 truncate">کارت بازرگانی حقوقی معتبر</p>
+                <p className="text-[11px] text-white font-bold truncate leading-tight">ستایش جعفری</p>
+                <p className="text-[9px] text-indigo-400 font-medium truncate">سازنده و طراح سامانه</p>
               </div>
             </div>
           )}

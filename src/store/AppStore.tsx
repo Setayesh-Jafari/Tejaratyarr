@@ -48,7 +48,7 @@ export const useStore = (): AppStoreShape => {
 const DEFAULT_SETTINGS: AppSettings = {
   fx: { usdNimaToman: 68000, usdAzadToman: 92500, eurToman: 76500, updatedAt: new Date().toISOString() },
   vatDefaultPct: 10,
-  orgName: 'شرکت بازرگانی بین‌المللی آریا',
+  orgName: 'ستایش جعفری',
 };
 
 export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
