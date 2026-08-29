@@ -1,6 +1,7 @@
 import React from 'react';
-import { Search, Plus, Sparkles, Menu } from 'lucide-react';
+import { Search, Plus, Menu, Cpu, TrendingUp, TrendingDown, Sparkles } from 'lucide-react';
 import { ActiveView } from '../types';
+import { useStore } from '../store/AppStore';
 
 interface HeaderProps {
   activeView: ActiveView;
@@ -12,6 +13,18 @@ interface HeaderProps {
   totalUnits: number;
 }
 
+const TITLES: Record<ActiveView, { title: string; sub: string }> = {
+  inventory: { title: 'میز کار کارگو و موجودی', sub: 'کارتابل کامل پرونده‌های وارداتی و انبار' },
+  pipeline: { title: 'گردش کار پرونده‌ها', sub: 'ثبت سفارش ← ترانزیت ← گمرک ← انبار' },
+  hscode_resolver: { title: 'تفکیک تعرفه (HS Code)', sub: 'دایرکتوری رسمی + پیشنهاد هوشمند' },
+  intelligence: { title: 'کاوشگر هوش تجاری', sub: '۱۰ موتور استنادی تجارت خارجی' },
+  assessment: { title: 'ارزیابی جامع واردات', sub: 'ویزارد ۷ مرحله‌ای صمت و گمرک' },
+  sourcing: { title: 'اعتبارسنجی تأمین‌کنندگان', sub: 'Due Diligence و ریسک تحریم' },
+  rfq: { title: 'استعلام قیمت (RFQ)', sub: 'پروفرما و اینکوترمز ۲۰۲۰' },
+  analytics: { title: 'داشبورد تحلیلی و مالی', sub: 'نمودارهای سبد و بهای تمام‌شده' },
+  provenance: { title: 'شناسنامه منابع داده', sub: 'شفافیت مراجع و متدولوژی' },
+};
+
 export const Header: React.FC<HeaderProps> = ({
   activeView,
   searchQuery,
@@ -21,97 +34,89 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleMobileMenu,
   totalUnits,
 }) => {
-  const getTitle = () => {
-    switch (activeView) {
-      case 'inventory':
-        return 'میز کار مدیریت کارگو و موجودی انبار';
-      case 'intelligence':
-        return 'پایگاه هوش تجاری و جستجوی ۶ گانه (Apify, Baidu, Trade Map...)';
-      case 'sourcing':
-        return 'اعتبارسنجی و ممیزی حقوقی تأمین‌کنندگان خارجی (Due Diligence)';
-      case 'assessment':
-        return 'موتور ارزیابی ۷ مرحله‌ای واردات کالا (سامانه جامع تجارت و گمرک)';
-      case 'rfq':
-        return 'مرکز صدور استعلام قیمت بین‌المللی و مکاتبات خرید (RFQ)';
-      case 'analytics':
-        return 'دفتر کل مالی و محاسبه بهای تمام‌شده ترخیص کالا (Landed Cost)';
-      default:
-        return 'سامانه بازرگانی تجارت‌یار';
-    }
-  };
+  const { health, settings } = useStore();
+  const meta = TITLES[activeView] ?? { title: 'سامانه بازرگانی تجارت‌یار', sub: '' };
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between flex-shrink-0 z-10">
-      <div className="flex items-center gap-3">
-        {/* Mobile Hamburger Button */}
+    <header className="tj-chrome border-b tj-chrome-line h-16 px-3 md:px-5 flex items-center justify-between flex-shrink-0 z-20 gap-3">
+      {/* عنوان صفحه */}
+      <div className="flex items-center gap-3 min-w-0">
         {onToggleMobileMenu && (
           <button
             onClick={onToggleMobileMenu}
-            className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-            title="باز کردن منوی ناوبری"
+            className="lg:hidden w-9 h-9 rounded-xl bg-slate-800/70 hover:bg-slate-800 text-slate-300 flex items-center justify-center transition-colors"
+            title="منوی ناوبری"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-4.5 h-4.5" />
           </button>
         )}
-
-        <div>
-          <h2 className="text-xs md:text-base font-bold text-slate-800 tracking-tight line-clamp-1">{getTitle()}</h2>
-          <div className="flex lg:hidden items-center gap-1 text-[10px] text-slate-500 font-semibold mt-0.5">
-            <span>تجارت‌یار — نسخه بازرگان</span>
-          </div>
+        <div className="min-w-0">
+          <h2 className="text-sm md:text-[15px] font-black text-white tracking-tight truncate">{meta.title}</h2>
+          <p className="text-[10px] text-slate-400 font-medium truncate hidden sm:block">{meta.sub}</p>
         </div>
-
-        <div className="hidden sm:flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>سامانه فعال ({totalUnits} ردیف کالا)</span>
-        </div>
+        <span className="hidden xl:inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-2.5 py-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          {totalUnits.toLocaleString('fa-IR')} ردیف فعال
+        </span>
       </div>
 
-      <div className="flex items-center gap-2 md:gap-3">
-        {/* Search Box on desktop */}
+      <div className="flex items-center gap-2 md:gap-2.5">
+        {/* جستجو */}
         <div className="relative hidden md:block">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="جستجوی کد کالا، تعرفه HS، VIN یا تأمین‌کننده..."
-            className="bg-slate-100/90 border border-slate-200 rounded-xl py-1.5 pr-8 pl-6 text-xs text-slate-800 placeholder-slate-400 w-56 lg:w-72 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all font-sans"
+            placeholder="جستجو در کارگو، تعرفه، تأمین‌کننده…"
+            className="bg-slate-800/60 border border-slate-700/80 rounded-xl py-2 pr-9 pl-8 text-xs text-slate-100 placeholder-slate-500 w-48 lg:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:bg-slate-800 transition-all font-sans"
           />
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5" />
+          <Search className="w-3.5 h-3.5 text-slate-500 absolute right-3 top-2.5" />
           {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute left-2.5 top-2 text-[10px] text-slate-400 hover:text-slate-600"
-            >
+            <button onClick={() => setSearchQuery('')} className="absolute left-2.5 top-2 text-slate-500 hover:text-slate-300">
               ✕
             </button>
           )}
         </div>
 
-        {/* Action Buttons */}
-        <button
-          id="btn-quick-assess"
-          onClick={onOpenAssessment}
-          className="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors"
-          title="شروع ارزیابی پرونده جدید واردات"
+        {/* نرخ ارز — نشانگر جهت تغییر با نرخ آزاد نسبت به نیما */}
+        <div
+          className="hidden xl:flex items-center gap-1.5 bg-slate-800/50 border border-slate-700/70 rounded-xl px-2.5 py-1.5 text-[10px] font-bold"
+          title="نرخ‌های مرجع داخلی — قابل ویرایش در داشبورد تحلیلی"
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-          <span className="hidden sm:inline">ارزیابی واردات جدید</span>
-          <span className="sm:hidden">ارزیابی</span>
-        </button>
+          {settings.fx.usdAzadToman > settings.fx.usdNimaToman ? (
+            <TrendingUp className="w-3.5 h-3.5 text-rose-400" />
+          ) : (
+            <TrendingDown className="w-3.5 h-3.5 text-emerald-400" />
+          )}
+          <div className="leading-tight text-left" dir="ltr">
+            <span className="text-slate-400 block">USD</span>
+            <span className="font-mono text-slate-200">
+              {(settings.fx.usdNimaToman / 1000).toLocaleString('fa-IR', { maximumFractionDigits: 1 })} / {(settings.fx.usdAzadToman / 1000).toLocaleString('fa-IR', { maximumFractionDigits: 1 })}k
+            </span>
+          </div>
+        </div>
 
-        <button
-          id="btn-add-unit"
-          onClick={onOpenAddUnit}
-          className="flex items-center gap-1.5 bg-blue-600 text-white px-3 md:px-4 py-1.5 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-xs shadow-blue-200"
+        {/* وضعیت هوش مصنوعی */}
+        <div
+          className={`hidden lg:flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[10px] font-bold border ${
+            health?.aiEnabled ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30' : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+          }`}
+          title={health?.aiEnabled ? `مدل ${health.model} روی سرور فعال است` : 'برای فعال‌سازی، GEMINI_API_KEY را در env سرور تنظیم کنید'}
         >
-          <Plus className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="hidden sm:inline">ثبت کارگوی جدید</span>
-          <span className="sm:hidden">کارگو +</span>
+          <Cpu className="w-3.5 h-3.5" />
+          {health?.aiEnabled ? health.model : 'AI محلی'}
+        </div>
+
+        {/* اکشن‌ها */}
+        <button onClick={onOpenAssessment} className="tj-btn bg-slate-800/70 hover:bg-slate-800 text-amber-200 border border-amber-500/25" title="ارزیابی پرونده جدید">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span className="hidden sm:inline">ارزیابی جدید</span>
+        </button>
+        <button onClick={onOpenAddUnit} className="tj-btn tj-btn-primary" title="ثبت کارگوی جدید">
+          <Plus className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">کارگوی جدید</span>
         </button>
       </div>
     </header>
   );
 };
-
-

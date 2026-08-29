@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { PRESET_SCENARIOS } from '../data/mockData';
 import { HS_DISPUTE_SCENARIOS } from '../data/hscodeScenarios';
+import { computeLandedCost, analyzeMargin } from '../lib/costing';
+import { LandedCostCalculator } from './LandedCostCalculator';
 import { 
   CheckCircle2, 
   Sparkles, 
@@ -21,12 +23,13 @@ import {
   Zap,
   Check
 } from 'lucide-react';
-import { InventoryUnit } from '../types';
+import { InventoryUnit, TradeAssessmentDossier } from '../types';
 
 interface TradeAssessmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddToInventory: (newItem: InventoryUnit) => void;
+  onAddDossier?: (dossier: Omit<TradeAssessmentDossier, 'id'>) => Promise<unknown>;
   initialScenario?: typeof HS_DISPUTE_SCENARIOS[0];
 }
 
@@ -34,6 +37,7 @@ export const TradeAssessmentModal: React.FC<TradeAssessmentModalProps> = ({
   isOpen,
   onClose,
   onAddToInventory,
+  onAddDossier,
   initialScenario,
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(0);
@@ -54,14 +58,21 @@ export const TradeAssessmentModal: React.FC<TradeAssessmentModalProps> = ({
   const [customsPort, setCustomsPort] = useState('گمرک شهید رجایی بندرعباس');
   const [targetCustomer, setTargetCustomer] = useState('نیروگاه‌سازان تجدیدپذیر و شهرک‌های صنعتی');
   
-  // Pricing & Landed Cost state
+  // Pricing & Landed Cost state — موتور محاسباتی مشترک (src/lib/costing.ts)
   const [fobPriceUsd, setFobPriceUsd] = useState<number>(62);
   const [freightUsd, setFreightUsd] = useState<number>(4.5);
-  const [insuranceUsd, setInsuranceUsd] = useState<number>(1.2);
-  const [usdFxRateToman, setUsdFxRateToman] = useState<number>(68000); // 68,000 Tomans per USD
-  const [tariffRate, setTariffRate] = useState<number>(4); // 4% Customs Duty
-  const [vatRate, setVatRate] = useState<number>(10); // 10% VAT
-  const [clearanceAndPortCostToman, setClearanceAndPortCostToman] = useState<number>(180000); // per unit in Tomans
+  const [insuranceUsd, setInsuranceUsd] = useState<number>(0.8);
+  const [usdFxRateToman, setUsdFxRateToman] = useState<number>(68000);
+  const [customsDutyPct, setCustomsDutyPct] = useState<number>(4);
+  const [commercialProfitPct, setCommercialProfitPct] = useState<number>(0);
+  const [vatRate, setVatRate] = useState<number>(10);
+  const [clearanceFeeToman, setClearanceFeeToman] = useState<number>(290000);
+  const [inlandFreightToman, setInlandFreightToman] = useState<number>(120000);
+  const [brokerAndBankToman, setBrokerAndBankToman] = useState<number>(180000);
+  const [otherFeeToman, setOtherFeeToman] = useState<number>(95000);
+  const [qtyNumber, setQtyNumber] = useState<number>(620);
+  const [sellPricePerUnitToman, setSellPricePerUnitToman] = useState<number>(0); // صفر = پیشنهاد خودکار ۳۰٪
+  const [savingDossier, setSavingDossier] = useState(false);
 
   if (!isOpen) return null;
 
@@ -81,21 +92,30 @@ export const TradeAssessmentModal: React.FC<TradeAssessmentModalProps> = ({
     setOriginPref(sc.origin);
     setTargetCustomer(sc.target);
     setSelectedHsCode(sc.hsCode);
-    setTariffRate(sc.customsDuty + sc.commercialProfit);
+    setCustomsDutyPct(sc.customsDuty);
+    setCommercialProfitPct(sc.commercialProfit);
     setVatRate(sc.vat);
   };
 
-  // Landed Cost calculations (in Tomans & USD)
-  const cifUsd = fobPriceUsd + freightUsd + insuranceUsd;
-  const baseCostToman = cifUsd * usdFxRateToman;
-  const dutyCostToman = (baseCostToman * tariffRate) / 100;
-  const landedPreVatToman = baseCostToman + dutyCostToman + clearanceAndPortCostToman;
-  const vatCostToman = (landedPreVatToman * vatRate) / 100;
-  const totalLandedCostToman = landedPreVatToman + vatCostToman;
-  
-  // Total in millions or thousands
-  const landedInMillionToman = Number((totalLandedCostToman / 1000000).toFixed(2));
-  const estimatedMarketPriceToman = Number((landedInMillionToman * 1.30).toFixed(2)); // 30% margin
+  // Landed Cost — محاسبات با موتور رسمی برنامه
+  const costingInput = {
+    fobUsd: fobPriceUsd,
+    freightUsd,
+    insuranceUsd,
+    qty: qtyNumber,
+    fxRateToman: usdFxRateToman,
+    customsDutyPct,
+    commercialProfitPct,
+    vatPct: vatRate,
+    clearanceFeeToman,
+    inlandFreightToman,
+    brokerAndBankToman,
+    otherFeeToman,
+  };
+  const landed = computeLandedCost(costingInput);
+  const margin = analyzeMargin(landed, sellPricePerUnitToman || landed.landedPerUnitToman * 1.3, qtyNumber);
+  const landedInMillionToman = Number(landed.landedPerUnitMillionToman.toFixed(2));
+  const estimatedMarketPriceToman = Number((margin.sellPricePerUnitToman / 1000000).toFixed(2));
 
   const stages = [
     { title: '۱. کالا و مشخصات', desc: 'پارامترهای فنی کاتالوگ' },
@@ -104,32 +124,65 @@ export const TradeAssessmentModal: React.FC<TradeAssessmentModalProps> = ({
     { title: '۴. بهای تمام‌شده', desc: 'Landed Cost و سود' },
   ];
 
-  const handleCreateAndAdd = () => {
+  const handleCreateAndAdd = async () => {
+    setSavingDossier(true);
+    const verdictOk = margin.profitPerUnitToman > 0;
     const newUnit: InventoryUnit = {
-      id: `CARGO-IR-${Date.now().toString().slice(-4)}`,
-      sku: `IMP-${Date.now().toString().slice(-4)}`,
-      vinOrCode: `HS-${selectedHsCode.replace(/\./g, '')}-${Date.now().toString().slice(-3)}`,
+      id: `CARGO-IR-${Date.now().toString().slice(-6)}`,
+      sku: `IMP-${Date.now().toString().slice(-6)}`,
+      vinOrCode: `HS-${selectedHsCode.replace(/\./g, '')}-${Date.now().toString().slice(-4)}`,
       name: productFa,
       category: category,
       specifications: specs,
       originCountry: originPref,
       customsPort: customsPort,
-      yearOrBatch: '۱۴۰۳ / پارت مصوب',
+      yearOrBatch: `${new Date().toLocaleDateString('fa-IR', { year: 'numeric' })} / پارت ارزیابی‌شده`,
       status: 'در انتظار تخصیص ارز و ثبت سفارش',
-      stockQty: 50,
+      stockQty: qtyNumber,
       unit: unit,
-      costPriceUsd: fobPriceUsd,
+      costPriceUsd: Number((fobPriceUsd + freightUsd + insuranceUsd).toFixed(2)),
       landedCostToman: landedInMillionToman,
       marketPriceToman: estimatedMarketPriceToman,
       hsCode: selectedHsCode,
       samtGroup: samtGroup,
-      orderRegCode: `1403${Math.floor(100000 + Math.random() * 900000)}`,
+      orderRegCode: `1404${Math.floor(100000 + Math.random() * 900000)}`,
       fxType: samtGroup.includes('۲۱') ? 'ارز نیمایی (سامانه نیما)' : 'ارز تالار دوم (توافقی)',
       supplierName: `${originPref.split(' ')[0]} Certified Manufacturer`,
       supplierRating: 96,
-      complianceGate: 'تأیید استاندارد و بهداشت',
+      complianceGate: 'در حال بازرسی استاندارد (COI)',
       lastUpdated: 'هم‌اکنون',
     };
+
+    // ثبت پرونده ارزیابی در آرشیو سرور (به‌صورت آسان با شکست کنار می‌شود)
+    try {
+      if (onAddDossier) {
+        await onAddDossier({
+          title: `${productFa} — ${qtyNumber.toLocaleString('fa-IR')} ${unit}`,
+          productFa,
+          productEn,
+          category,
+          specs,
+          qty: String(qtyNumber),
+          unit,
+          originPref,
+          targetCustomer,
+          application: targetCustomer,
+          estimatedLandedCostToman: landedInMillionToman,
+          suggestedHsCode: selectedHsCode,
+          samtGroup,
+          customsDutyRate: customsDutyPct + commercialProfitPct,
+          vatRate,
+          status: verdictOk ? 'آماده ثبت سفارش' : 'در حال ارزیابی فنی و استاندارد',
+          evidenceScore: Math.round(Math.max(40, Math.min(98, margin.marginPct * 2.2 + 30))),
+          createdAt: new Date().toISOString(),
+        });
+      }
+    } catch {
+      // خطای آرشیو مانع ثبت انبار نمی‌شود
+    } finally {
+      setSavingDossier(false);
+    }
+
     onAddToInventory(newUnit);
     onClose();
   };
@@ -267,7 +320,7 @@ TejaratYar Commercial Platform (Iran)`;
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-700">تعداد / حجم سفارش هدف *</label>
                   <input
@@ -275,6 +328,17 @@ TejaratYar Commercial Platform (Iran)`;
                     value={qty}
                     onChange={(e) => setQty(e.target.value)}
                     className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">تعداد عددی (مبنای محاسبات) *</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={qtyNumber}
+                    onChange={(e) => setQtyNumber(Math.max(1, Number(e.target.value) || 1))}
+                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                    dir="ltr"
                   />
                 </div>
                 <div className="space-y-1">
@@ -325,7 +389,8 @@ TejaratYar Commercial Platform (Iran)`;
                         type="button"
                         onClick={() => {
                           setSelectedHsCode(codeItem.code);
-                          setTariffRate(codeItem.totalTariffPercent);
+                          setCustomsDutyPct(codeItem.customsDuty);
+                          setCommercialProfitPct(codeItem.commercialProfit);
                           setSamtGroup(codeItem.samtGroup);
                           setVatRate(codeItem.vatRate);
                         }}
@@ -464,89 +529,75 @@ TejaratYar Commercial Platform (Iran)`;
 
           {currentStep === 3 && (
             <div className="space-y-4">
-              <div className="bg-slate-900 text-white p-5 rounded-2xl space-y-4">
+              <div className="bg-slate-900 text-white p-4 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div>
                     <h4 className="text-xs font-bold text-slate-200">
                       موتور محاسبه بهای تمام‌شده نهایی ترخیص کالا (Landed Cost Engine)
                     </h4>
                     <p className="text-[11px] text-slate-400">
-                      محاسبه قیمت خرید ارزی، حمل بین‌المللی، بیمه، حقوق ورودی گمرکی، سود بازرگانی و مالیات ارزش افزوده
+                      مبنای محاسبات: ارزش CIF × نرخ ارز → حقوق ورودی → سود بازرگانی → مالیات ارزش افزوده → هزینه‌های محلی
                     </p>
                   </div>
-                  <div className="text-left" dir="ltr">
-                    <span className="text-[10px] text-slate-400 block">بهای تمام‌شده هر واحد:</span>
-                    <span className="text-2xl font-black text-emerald-400 font-mono">
-                      {landedInMillionToman.toLocaleString('fa-IR')} <span className="text-xs font-normal text-emerald-200">میلیون تومان</span>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-3 border-t border-slate-800 text-xs">
-                  <div>
-                    <span className="text-slate-400 text-[10px] block mb-1">قیمت FOB خرید ($):</span>
-                    <input
-                      type="number"
-                      value={fobPriceUsd}
-                      onChange={(e) => setFobPriceUsd(Number(e.target.value))}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono font-bold text-xs"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] block mb-1">کرایه حمل کانتینر ($):</span>
-                    <input
-                      type="number"
-                      value={freightUsd}
-                      onChange={(e) => setFreightUsd(Number(e.target.value))}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono font-bold text-xs"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] block mb-1">نرخ برابری ارز (تومان):</span>
-                    <input
-                      type="number"
-                      value={usdFxRateToman}
-                      onChange={(e) => setUsdFxRateToman(Number(e.target.value))}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono font-bold text-xs"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] block mb-1">حقوق ورودی و سود بازرگانی (%):</span>
-                    <input
-                      type="number"
-                      value={tariffRate}
-                      onChange={(e) => setTariffRate(Number(e.target.value))}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono font-bold text-xs"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] block mb-1">قیمت فروش پیشنهادی در بازار:</span>
-                    <div className="text-xs font-bold text-blue-400 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 font-mono">
-                      {estimatedMarketPriceToman.toLocaleString('fa-IR')} م.ت (+۳۰٪)
+                  <div className="text-left flex gap-2" dir="ltr">
+                    <div className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-center">
+                      <span className="text-[9px] text-slate-400 block">CIF هر واحد</span>
+                      <span className="text-sm font-black text-white font-mono">${(fobPriceUsd + freightUsd + insuranceUsd).toFixed(2)}</span>
+                    </div>
+                    <div className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-center">
+                      <span className="text-[9px] text-slate-400 block">مجموع تعرفه</span>
+                      <span className="text-sm font-black text-amber-400 font-mono">{(customsDutyPct + commercialProfitPct).toLocaleString('fa-IR')}٪</span>
+                    </div>
+                    <div className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-center">
+                      <span className="text-[9px] text-slate-400 block">تعداد</span>
+                      <span className="text-sm font-black text-white font-mono">{qtyNumber.toLocaleString('fa-IR')}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
+              {/* ماشین‌حساب کامل بهای تمام‌شده */}
+              <LandedCostCalculator
+                initial={{
+                  fobUsd: fobPriceUsd,
+                  freightUsd,
+                  insuranceUsd,
+                  qty: qtyNumber,
+                  fxRateToman: usdFxRateToman,
+                  customsDutyPct,
+                  commercialProfitPct,
+                  vatPct: vatRate,
+                  clearanceFeeToman,
+                  inlandFreightToman,
+                  brokerAndBankToman,
+                  otherFeeToman,
+                }}
+                sellPricePerUnitToman={sellPricePerUnitToman || Math.round(landed.landedPerUnitToman * 1.3)}
+                onSellPriceChange={setSellPricePerUnitToman}
+              />
+
               {/* Final Decision Gate Verdict */}
-              <div className="border border-emerald-200 bg-emerald-50/80 rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3">
+              <div className={`border rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3 ${margin.profitPerUnitToman > 0 ? 'border-emerald-200 bg-emerald-50/80' : 'border-rose-200 bg-rose-50/80'}`}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-lg">
-                    ✓
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${margin.profitPerUnitToman > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                    {margin.profitPerUnitToman > 0 ? '✓' : '!'}
                   </div>
                   <div>
-                    <h5 className="text-xs font-bold text-emerald-950">نتیجه بررسی پرونده: توجیه‌پذیری اقتصادی تأیید شد</h5>
-                    <p className="text-[11px] text-emerald-800">
-                      شاخص ریسک پایین (امتیاز ۹۶)، حاشیه سود پیش‌بینی شده بالای ۳۰٪ و مسیر تأمین ارز بدون مانع حقوقی.
+                    <h5 className={`text-xs font-bold ${margin.profitPerUnitToman > 0 ? 'text-emerald-950' : 'text-rose-950'}`}>
+                      نتیجه بررسی پرونده: {margin.profitPerUnitToman > 0 ? 'توجیه‌پذیری اقتصادی تأیید شد' : 'حاشیه سود منفی — نیازمند بازنگری قیمت یا نرخ ارز'}
+                    </h5>
+                    <p className={`text-[11px] ${margin.profitPerUnitToman > 0 ? 'text-emerald-800' : 'text-rose-800'}`}>
+                      حاشیه سود {margin.marginPct.toLocaleString('fa-IR')}٪ — بازده سرمایه {margin.roiPct.toLocaleString('fa-IR')}٪ — سود کل محموله {Math.round(margin.profitTotalToman / 1_000_000).toLocaleString('fa-IR')} میلیون تومان — نرخ سربه‌سر ارز {margin.breakEvenFxToman.toLocaleString('fa-IR')} تومان.
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={handleCreateAndAdd}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                  disabled={savingDossier}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-60"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>ثبت در سامانه و ورود به کارتابل انبار</span>
+                  <span>{savingDossier ? 'در حال ثبت...' : 'ثبت در سامانه و ورود به کارتابل انبار'}</span>
                 </button>
               </div>
             </div>

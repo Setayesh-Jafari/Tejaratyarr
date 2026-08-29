@@ -11,6 +11,7 @@ export type ProductCategory =
   | 'فولاد و مواد اولیه صنعتی'
   | 'تجهیزات پزشکی و آزمایشگاهی'
   | 'کالاهای اساسی و کشاورزی'
+  | 'منسوجات و پوشاک'
   | 'قطعات الکترونیک و IT';
 
 export type FxType = 'ارز نیمایی (سامانه نیما)' | 'ارز تالار دوم (توافقی)' | 'ارز اشخاص / صادرات خود' | 'ارز آزاد تجاری';
@@ -139,6 +140,10 @@ export interface InventoryUnit {
   complianceGate: 'تأیید استاندارد و بهداشت' | 'در حال بازرسی استاندارد (COI)' | 'نیازمند اصلاح اسناد گمرکی';
   lastUpdated: string;
   verificationStatus?: 'تأییدشده رسمی' | 'نیازمند استعلام میدانی';
+  /** توسعه ۱۴۰۵: چرخه‌ی عمر پرونده */
+  events?: CargoEvent[];
+  createdAt?: string;      // ISO
+  stageEnteredAt?: string; // ISO تاریخ ورود به وضعیت فعلی
 }
 
 export interface SupplierRecord {
@@ -197,6 +202,135 @@ export interface StageLog {
   status: 'ok' | 'info' | 'warn' | 'active';
 }
 
-export type ActiveView = 'inventory' | 'intelligence' | 'hscode_resolver' | 'sourcing' | 'assessment' | 'rfq' | 'provenance' | 'analytics';
+export type ActiveView = 'inventory' | 'intelligence' | 'hscode_resolver' | 'sourcing' | 'assessment' | 'rfq' | 'provenance' | 'analytics' | 'pipeline';
+
+/* ---------- توسعه ۱۴۰۵: گردش کار، بهای تمام‌شده، هوش مصنوعی ---------- */
+
+/** رویداد چرخه‌ی عمر پرونده (تایم‌لاین کارگو) */
+export interface CargoEvent {
+  id: string;
+  at: string; // ISO datetime
+  kind: 'created' | 'status_change' | 'note' | 'assessment' | 'ai_review';
+  title: string;
+  detail?: string;
+  by?: string;
+}
+
+/** وضعیت‌های اصلی جریان کار (رزرو مشتری حالت جانبی است) */
+export const STATUS_FLOW: ItemStatus[] = [
+  'در انتظار تخصیص ارز و ثبت سفارش',
+  'در حال ترانزیت بین‌المللی',
+  'در گمرک (در حال ترخیص)',
+  'موجود در انبار (ترخیص شده)',
+];
+
+/** ورودی موتور بهای تمام‌شده — معادل فرمول‌های ترخیص گمرک ایران */
+export interface CostingInput {
+  fobUsd: number;            // قیمت هر واحد FOB به دلار
+  freightUsd: number;        // سهم حمل هر واحد (دریایی/هوایی)
+  insuranceUsd: number;      // سهم بیمه هر واحد
+  qty: number;               // تعداد
+  fxRateToman: number;       // نرخ برابری دلار به تومان
+  customsDutyPct: number;    // حقوق ورودی پایه (٪)
+  commercialProfitPct: number; // سود بازرگانی مصوب صمت (٪)
+  vatPct: number;            // مالیات بر ارزش افزوده واردات (٪)
+  clearanceFeeToman: number; // هزینه ترخیص‌کاری و پلمب هر واحد
+  inlandFreightToman: number; // حمل داخلی بندر→انبار هر واحد
+  brokerAndBankToman: number; // کارمزد بانک/صرافی و اسناد هر واحد
+  otherFeeToman: number;     // سایر (بازرسی COI، استاندارد و...)
+}
+
+export interface CostLine {
+  key: string;
+  label: string;
+  totalToman: number;
+  perUnitToman: number;
+  pctOfTotal: number;
+  kind: 'base' | 'tariff' | 'tax' | 'local';
+}
+
+export interface LandedCostResult {
+  cifUsdTotal: number;
+  cifTomanTotal: number;
+  lines: CostLine[];
+  landedTotalToman: number;
+  landedPerUnitToman: number;
+  landedPerUnitMillionToman: number;
+  customsOutlayToman: number; // مجموع پرداخت به گمرک (حقوق ورودی + سود بازرگانی + مالیات)
+}
+
+export interface MarginAnalysis {
+  sellPricePerUnitToman: number;
+  profitPerUnitToman: number;
+  profitTotalToman: number;
+  marginPct: number;      // سود / قیمت فروش
+  roiPct: number;         // سود / بهای تمام‌شده
+  breakEvenFxToman: number; // نرخ ارزی که سود صفر شود
+}
+
+/** تنظیمات سراسری سامانه */
+export interface AppSettings {
+  fx: {
+    usdNimaToman: number;
+    usdAzadToman: number;
+    eurToman: number;
+    updatedAt: string;
+  };
+  vatDefaultPct: number;
+  orgName: string;
+}
+
+/** پیشنهاد هوشمند کد تعرفه */
+export interface AiHsSuggestion {
+  code: string;
+  title: string;
+  dutyTotalPct?: number;
+  samtGroup?: string;
+  confidence: number; // 0-100
+  reasoning: string;
+  warnings?: string[];
+}
+
+export interface AiHsSuggestResponse {
+  engine: 'gemini' | 'local';
+  suggestions: AiHsSuggestion[];
+  note?: string;
+}
+
+/** گزارش تحلیل ریسک تأمین‌کننده */
+export interface AiSupplierReport {
+  riskLevel: 'کم' | 'متوسط' | 'بالا';
+  riskScore: number; // 0 (ریسک صفر) تا 100 (ریسک کامل)
+  summary: string;
+  entityInsights: string[];
+  redFlags: string[];
+  recommendedChecks: string[];
+}
+
+export interface AiSupplierCheckResponse {
+  engine: 'gemini' | 'local';
+  report: AiSupplierReport;
+  disclaimer?: string;
+}
+
+export interface HealthResponse {
+  ok: true;
+  aiEnabled: boolean;
+  model?: string;
+  version: string;
+}
+
+export interface BootstrapResponse {
+  inventory: InventoryUnit[];
+  suppliers: SupplierRecord[];
+  assessments: TradeAssessmentDossier[];
+  settings: AppSettings;
+}
+
+export interface PaginatedEvents {
+  events: CargoEvent[];
+  total: number;
+}
+
 
 

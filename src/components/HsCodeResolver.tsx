@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   HsDisputeScenario, 
-  HsCodeCandidate, 
   VerificationState 
 } from '../types';
 import { HS_DISPUTE_SCENARIOS } from '../data/hscodeScenarios';
 import { HS_CODE_DIRECTORY, CATEGORIES_WITH_COUNTS, HsCodeDatabaseEntry } from '../data/hscodeDirectory';
+import { matchesQuery } from '../lib/search';
+import { AiHsSuggestCard } from './AiAssist';
 import { 
   AlertTriangle, 
   CheckCircle2, 
@@ -17,7 +18,8 @@ import {
   Copy, 
   Check, 
   ExternalLink, 
-  ShieldAlert, 
+  ShieldAlert,
+  ShieldCheck, 
   ArrowRightLeft,
   Filter,
   Flame,
@@ -37,6 +39,11 @@ interface HsCodeResolverProps {
   onSelectFinalCode?: (code: string, desc: string, duty: number) => void;
 }
 
+// کد تعرفه پیشنهادی سناریو: کدی از میان کدهای رقیب که پرچم isRecommended دارد
+const getRecommendedCode = (scenario: HsDisputeScenario): string => {
+  return scenario.competingCodes.find((c) => c.isRecommended)?.code ?? scenario.competingCodes[0].code;
+};
+
 export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCode }) => {
   // Navigation mode: 'interactive_scenarios' (dispute scenarios) vs 'comprehensive_directory' (searchable tariff book)
   const [viewMode, setViewMode] = useState<'interactive_scenarios' | 'comprehensive_directory'>('interactive_scenarios');
@@ -44,7 +51,7 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
   // Scenario state
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(HS_DISPUTE_SCENARIOS[0].id);
   const [selectedCandidateCode, setSelectedCandidateCode] = useState<string>(
-    HS_DISPUTE_SCENARIOS[0].recommendedCode
+    getRecommendedCode(HS_DISPUTE_SCENARIOS[0])
   );
   const [activeTab, setActiveTab] = useState<'comparison' | 'decision_tree' | 'legal_notes'>('comparison');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -63,12 +70,12 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
   const selectedCodeObj = useMemo(() => {
     return (
       currentScenario.competingCodes.find((c) => c.code === selectedCandidateCode) ||
-      currentScenario.competingCodes.find((c) => c.code === currentScenario.recommendedCode) ||
+      currentScenario.competingCodes.find((c) => c.code === getRecommendedCode(currentScenario)) ||
       currentScenario.competingCodes[0]
     );
   }, [currentScenario, selectedCandidateCode]);
 
-  // Directory Search Filtering
+  // Directory Search Filtering — تطبیق واژه‌محور (مرز کلمه، نه زیررشته)
   const filteredDirectory = useMemo(() => {
     return HS_CODE_DIRECTORY.filter((entry) => {
       // Category filter
@@ -76,11 +83,9 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
         selectedDirectoryCategory === 'همه دسته‌بندی‌ها' || 
         entry.category === selectedDirectoryCategory;
 
-      // Text search
+      // Text search — واژه‌کامل/پیشوندی با نرمال‌سازی فارسی
       let matchesText = true;
       if (directorySearch.trim()) {
-        const q = directorySearch.toLowerCase().trim();
-        const tokens = q.split(/\s+/);
         const corpus = [
           entry.code,
           entry.titleFa,
@@ -93,14 +98,23 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
           ...entry.sampleProducts,
           ...entry.mandatoryPermits,
           ...entry.allowedFxTypes
-        ].join(' ').toLowerCase();
+        ].join(' ');
 
-        matchesText = tokens.every(t => corpus.includes(t));
+        matchesText = matchesQuery(directorySearch, corpus);
       }
 
       return matchesCategory && matchesText;
     });
   }, [directorySearch, selectedDirectoryCategory]);
+
+  // ✦ رفع باگ «شناسنامه گیرکرده»: هر بار نتایج فیلتر شوند، اگر انتخاب فعلی در
+  // نتایج نباشد به‌طور خودکار اولین نتیجه‌ی مرتبط انتخاب می‌شود تا پنل
+  // شناسنامه فنی همیشه محصول جستجوشده را نشان دهد — نه رکورد اول دایرکتوری را.
+  useEffect(() => {
+    if (filteredDirectory.length > 0 && !filteredDirectory.some((e) => e.code === selectedEntry?.code)) {
+      setSelectedEntry(filteredDirectory[0]);
+    }
+  }, [filteredDirectory]);
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -124,56 +138,35 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
   };
 
   return (
-    <div id="hs-code-resolver-module" className="space-y-4 text-right">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-l from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 shadow-sm border border-slate-800 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div id="hs-code-resolver-module" className="space-y-3.5 text-right">
+      {/* دستیار هوشمند پیشنهاد تعرفه */}
+      <AiHsSuggestCard />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="bg-indigo-500/30 text-indigo-300 border border-indigo-400/40 text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                <Scale className="w-3.5 h-3.5 text-indigo-400" />
-                <span>سامانه هوشمند ممیزی تعرفه و حل اختلافات گمرکی (HS Code Resolver)</span>
-              </span>
-              <span className="bg-amber-500/20 text-amber-300 text-xs font-medium px-2 py-0.5 rounded-md">
-                منطبق با کتاب مقررات صادرات و واردات سال ۱۴۰۳
-              </span>
-            </div>
-            <h2 className="text-lg md:text-xl font-bold text-white tracking-tight">
-              تعیین دقیق کد تعرفه ۸ رقمی گمرک، تفکیک حقوق ورودی و پیشگیری از جریمه ماده ۱۰۸
-            </h2>
-            <p className="text-xs text-slate-300 max-w-3xl leading-relaxed">
-              با جستجوی نام کالا یا انتخاب سناریوهای پرریسک، تفاوت‌های فنی، نوع ارز مجاز (نیما/تالار دوم)، گروه کالایی صمت و مجوزهای الزامی را قبل از ثبت سفارش نهایی بررسی نمایید.
-            </p>
-          </div>
-
-          {/* Mode Switcher Tabs */}
-          <div className="flex items-center gap-1.5 bg-slate-800/90 p-1.5 rounded-xl border border-slate-700/80 shrink-0">
-            <button
-              onClick={() => setViewMode('interactive_scenarios')}
-              className={`text-xs font-bold px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
-                viewMode === 'interactive_scenarios'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
-              <span>سناریوهای چالش‌برانگیز و اختلافی</span>
-            </button>
-            <button
-              onClick={() => setViewMode('comprehensive_directory')}
-              className={`text-xs font-bold px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
-                viewMode === 'comprehensive_directory'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <FolderTree className="w-4 h-4 text-cyan-400" />
-              <span>جستجوی آزاد در کل کتاب تعرفه و کالاها</span>
-            </button>
-          </div>
+      {/* نوار حالت — سناریوها یا دایرکتوری */}
+      <div className="tj-card p-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl self-start">
+          <button
+            onClick={() => setViewMode('interactive_scenarios')}
+            className={`text-[11px] font-bold px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
+              viewMode === 'interactive_scenarios' ? 'bg-white text-indigo-700 shadow-sm border border-indigo-100' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+            <span>سناریوهای اختلافی گمرک</span>
+          </button>
+          <button
+            onClick={() => setViewMode('comprehensive_directory')}
+            className={`text-[11px] font-bold px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
+              viewMode === 'comprehensive_directory' ? 'bg-white text-indigo-700 shadow-sm border border-indigo-100' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <FolderTree className="w-3.5 h-3.5 text-teal-600" />
+            <span>جستجوی آزاد کتاب تعرفه</span>
+          </button>
         </div>
+        <span className="text-[10px] text-slate-400 font-medium px-2">
+          منطبق با کتاب مقررات صادرات و واردات — پیشگیری از جریمه ماده ۱۰۸ ق.ا.گ
+        </span>
       </div>
 
       {/* VIEW MODE 1: COMPREHENSIVE DIRECTORY & FREE TEXT SEARCH */}
@@ -359,7 +352,10 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
                 <>
                   <div className="pb-3 border-b border-slate-100">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-indigo-600">شناسنامه فنی کد تعرفه</span>
+                      <span className="text-xs font-bold text-indigo-600 flex items-center gap-1.5">
+                        شناسنامه فنی کد تعرفه
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="همگام با جستجو و انتخاب شما" />
+                      </span>
                       <span className="font-mono text-base font-bold text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-300">
                         {selectedEntry.code}
                       </span>
@@ -367,6 +363,9 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
                     <h3 className="text-sm font-bold text-slate-900 mt-2 leading-snug">
                       {selectedEntry.titleFa}
                     </h3>
+                    <p className="text-[10px] font-mono text-slate-400 mt-1 text-left" dir="ltr">
+                      {selectedEntry.titleEn}
+                    </p>
                   </div>
 
                   {/* Tariff & Customs Breakdown */}
@@ -438,6 +437,20 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
                     </div>
                   )}
 
+                  {/* شناسنامه استنادی — مرجع و تاریخ بازبینی */}
+                  <div className="text-[10px] leading-relaxed bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold text-slate-600">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      شناسنامه استنادی این کد
+                    </div>
+                    <p className="text-slate-500">
+                      مرجع: <span className="text-slate-700 font-medium">{selectedEntry.sourceRef ?? 'کتاب مقررات صادرات و واردات'}</span>
+                    </p>
+                    <p className="text-slate-500">
+                      آخرین بازبینی نرخ‌ها: <span className="text-slate-700 font-mono">{selectedEntry.lastReviewed ?? '—'}</span>
+                    </p>
+                  </div>
+
                   {/* Action Button */}
                   <button
                     onClick={() => {
@@ -484,7 +497,7 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
                     key={sc.id}
                     onClick={() => {
                       setSelectedScenarioId(sc.id);
-                      setSelectedCandidateCode(sc.recommendedCode);
+                      setSelectedCandidateCode(getRecommendedCode(sc));
                     }}
                     className={`p-3 rounded-xl border text-right transition-all flex flex-col justify-between space-y-2 ${
                       isSelected
@@ -502,12 +515,12 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
                           ریسک بالا
                         </span>
                       </div>
-                      <h4 className="text-xs font-bold leading-snug line-clamp-2">{sc.productName}</h4>
+                      <h4 className="text-xs font-bold leading-snug line-clamp-2">{sc.productNameFa}</h4>
                     </div>
 
                     <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200/60">
                       <span>کدهای درگیر: {sc.competingCodes.length} تعرفه</span>
-                      <span className="font-mono text-indigo-700 font-bold">{sc.recommendedCode}</span>
+                      <span className="font-mono text-indigo-700 font-bold">{getRecommendedCode(sc)}</span>
                     </div>
                   </button>
                 );

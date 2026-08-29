@@ -1,6 +1,8 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import { InventoryUnit } from '../types';
-import { X, ShieldCheck, CheckCircle2, DollarSign, Truck, FileText, Globe, Building2, Anchor } from 'lucide-react';
+import { X, ShieldCheck, CheckCircle2, DollarSign, Truck, FileText, Globe, Building2, Anchor, History } from 'lucide-react';
+import { faTimeAgo } from '../lib/format';
 
 interface UnitDetailModalProps {
   unit: InventoryUnit | null;
@@ -136,9 +138,38 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({
             </div>
           </div>
 
+          {/* Timeline — چرخه عمر پرونده */}
+          {(unit.events?.length ?? 0) > 0 && (
+            <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-3">
+              <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <History className="w-3.5 h-3.5 text-indigo-600" />
+                <span>تایم‌لاین چرخه‌ی عمر پرونده ({unit.events!.length.toLocaleString('fa-IR')} رویداد)</span>
+              </h4>
+              <div className="space-y-0 pr-4 border-r-2 border-slate-100">
+                {[...unit.events!].reverse().map((ev) => (
+                  <motion.div key={ev.id} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} className="relative py-2 pr-4">
+                    <span className={`absolute -right-[1.4rem] top-3.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
+                      ev.kind === 'status_change' ? 'bg-blue-500' : ev.kind === 'created' ? 'bg-emerald-500' : 'bg-slate-400'
+                    }`} />
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-bold text-slate-700">{ev.title}</p>
+                        {ev.detail && <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">{ev.detail}</p>}
+                        {ev.by && <p className="text-[10px] text-slate-400 mt-0.5">{ev.by}</p>}
+                      </div>
+                      <span className="text-[10px] text-slate-400 shrink-0 whitespace-nowrap" title={new Date(ev.at).toLocaleString('fa-IR')}>
+                        {faTimeAgo(ev.at)}
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Status Quick Updater */}
           <div className="space-y-2 pt-1">
-            <label className="text-xs font-bold text-slate-700 block">تغییر وضعیت پرونده / کارگو در سامانه:</label>
+            <label className="text-xs font-bold text-slate-700 block">تغییر وضعیت پرونده / کارگو در سامانه (با ثبت در تایم‌لاین):</label>
             <div className="flex flex-wrap gap-2">
               {statuses.map((st) => (
                 <button
