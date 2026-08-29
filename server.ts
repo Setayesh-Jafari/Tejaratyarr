@@ -6,14 +6,10 @@
  */
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import { db, uid } from './server/db';
 import { hsSuggest, supplierCheck, isAiEnabled, modelName } from './server/ai';
 import type { InventoryUnit, SupplierRecord, TradeAssessmentDossier, AppSettings } from './src/types';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
