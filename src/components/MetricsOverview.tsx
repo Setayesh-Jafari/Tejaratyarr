@@ -1,5 +1,8 @@
 import React from 'react';
 import { InventoryUnit } from '../types';
+import { Warehouse, Ship, Hourglass, Coins } from 'lucide-react';
+import { StatCard } from './ui/Chrome';
+import { fmtBillion } from '../lib/format';
 
 interface MetricsOverviewProps {
   inventory: InventoryUnit[];
@@ -7,7 +10,7 @@ interface MetricsOverviewProps {
 
 export const MetricsOverview: React.FC<MetricsOverviewProps> = ({ inventory }) => {
   const totalClearedUnits = inventory
-    .filter((i) => i.status === 'موجود در انبار (ترخیص شده)')
+    .filter((i) => i.status === 'موجود در انبار (ترخیص شده)' || i.status === 'رزرو مشتری / پیش‌فروش')
     .reduce((acc, item) => acc + item.stockQty, 0);
 
   const totalInTransitOrCustoms = inventory
@@ -19,63 +22,39 @@ export const MetricsOverview: React.FC<MetricsOverviewProps> = ({ inventory }) =
   ).length;
 
   const totalInventoryValueToman = inventory.reduce((acc, item) => {
-    return acc + (item.landedCostToman * (item.unit.includes('تن') || item.unit.includes('کیسه') ? Math.min(item.stockQty, 10) : item.stockQty));
+    return acc + item.landedCostToman * (item.unit.includes('تن') || item.unit.includes('کیسه') ? Math.min(item.stockQty, 10) : item.stockQty);
   }, 0);
 
   return (
-    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
-      {/* Total Units Card */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-        <p className="text-slate-500 text-xs font-semibold mb-1">کالاهای ترخیص‌شده در انبار</p>
-        <div className="flex items-end justify-between">
-          <span className="text-2xl font-bold text-slate-900 font-mono">
-            {totalClearedUnits.toLocaleString('fa-IR')} <span className="text-xs font-normal text-slate-500 font-sans">واحد/عدد</span>
-          </span>
-          <span className="text-emerald-700 text-xs font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-            آماده فروش
-          </span>
-        </div>
-      </div>
-
-      {/* Active In-Transit Card */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-        <p className="text-slate-500 text-xs font-semibold mb-1">محموله‌های در گمرک و ترانزیت</p>
-        <div className="flex items-end justify-between">
-          <span className="text-2xl font-bold text-slate-900 font-mono">
-            {totalInTransitOrCustoms.toLocaleString('fa-IR')} <span className="text-xs font-normal text-slate-500 font-sans">واحد فعال</span>
-          </span>
-          <span className="text-blue-700 text-xs font-bold bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
-            در حال ترخیص
-          </span>
-        </div>
-      </div>
-
-      {/* Awaiting Review */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-        <p className="text-slate-500 text-xs font-semibold mb-1">در صف تخصیص ارز و بازرسی استاندارد</p>
-        <div className="flex items-end justify-between">
-          <span className="text-2xl font-bold text-slate-900 font-mono">
-            {totalAwaitingFx.toLocaleString('fa-IR')} <span className="text-xs font-normal text-slate-500 font-sans">پرونده صمت</span>
-          </span>
-          <span className="text-amber-700 text-xs font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-            پیگیری اولویت‌دار
-          </span>
-        </div>
-      </div>
-
-      {/* Avg Turnaround */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-        <p className="text-slate-500 text-xs font-semibold mb-1">میانگین چرخه ثبت تا ترخیص</p>
-        <div className="flex items-end justify-between">
-          <span className="text-2xl font-bold text-slate-900 font-mono">
-            ۲۱.۴ <span className="text-xs font-normal text-slate-500 font-sans">روز کاری</span>
-          </span>
-          <span className="text-slate-600 text-xs font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
-            مسیر سبز گمرکی
-          </span>
-        </div>
-      </div>
+    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-shrink-0">
+      <StatCard
+        label="کالاهای ترخیص‌شده در انبار"
+        value={totalClearedUnits.toLocaleString('fa-IR')}
+        unit="واحد"
+        badge={{ text: 'آماده فروش', tone: 'emerald' }}
+        icon={<Warehouse className="w-3.5 h-3.5" />}
+      />
+      <StatCard
+        label="در گمرک و ترانزیت بین‌المللی"
+        value={totalInTransitOrCustoms.toLocaleString('fa-IR')}
+        unit="واحد فعال"
+        badge={{ text: 'در حال ترخیص', tone: 'blue' }}
+        icon={<Ship className="w-3.5 h-3.5" />}
+      />
+      <StatCard
+        label="صف تخصیص ارز و بازرسی استاندارد"
+        value={totalAwaitingFx.toLocaleString('fa-IR')}
+        unit="پرونده صمت"
+        badge={{ text: 'در انتظار', tone: 'amber' }}
+        icon={<Hourglass className="w-3.5 h-3.5" />}
+      />
+      <StatCard
+        label="ارزش بهای تمام‌شده سبد"
+        value={fmtBillion(totalInventoryValueToman)}
+        unit="میلیارد ت"
+        badge={{ text: 'سرمایه درگیر', tone: 'violet' }}
+        icon={<Coins className="w-3.5 h-3.5" />}
+      />
     </section>
   );
 };
-

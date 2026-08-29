@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import {
+  Boxes, Workflow, Scale, Sparkles, FileCheck2, Globe2, Send, BarChart3, Database,
+} from 'lucide-react';
 import { ActiveView } from './types';
 import { HS_DISPUTE_SCENARIOS } from './data/hscodeScenarios';
 import { AppStoreProvider, useStore } from './store/AppStore';
 import { ToastHost, ViewSkeleton, FatalError } from './components/ui/Feedback';
+import { PageHero } from './components/ui/Chrome';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { MetricsOverview } from './components/MetricsOverview';
@@ -20,6 +24,7 @@ import { UnitDetailModal } from './components/UnitDetailModal';
 import { AddUnitModal } from './components/AddUnitModal';
 import { HsCodeResolver } from './components/HsCodeResolver';
 import { DataProvenanceView } from './components/DataProvenanceView';
+import { fmtBillion } from './lib/format';
 import type { InventoryUnit, SupplierRecord, TradeAssessmentDossier } from './types';
 
 const Workspace: React.FC = () => {
@@ -40,7 +45,6 @@ const Workspace: React.FC = () => {
   const [selectedUnit, setSelectedUnit] = useState<InventoryUnit | null>(null);
   const [activeRfqSupplier, setActiveRfqSupplier] = useState<SupplierRecord | null>(null);
 
-  // نسخه به‌روزشده واحد پس از تغییر وضعیت در مودال جزئیات
   const selectedUnitLive = selectedUnit ? inventory.find((u) => u.id === selectedUnit.id) ?? selectedUnit : null;
 
   const handleAddUnit = async (newUnit: InventoryUnit) => {
@@ -67,9 +71,112 @@ const Workspace: React.FC = () => {
     await saveAssessment({ ...dossier, id: `DOSS-${Date.now().toString(36)}` });
   };
 
+  /* شاخص‌های زنده برای سربرگ هر نما */
+  const activeShipments = inventory.filter((u) => u.status !== 'موجود در انبار (ترخیص شده)' && u.status !== 'رزرو مشتری / پیش‌فروش').length;
+  const customsCount = inventory.filter((u) => u.status === 'در گمرک (در حال ترخیص)').length;
+  const portfolioValue = inventory.reduce((s, u) => s + u.landedCostToman * u.stockQty, 0);
+
+  const heroFor = (view: ActiveView) => {
+    switch (view) {
+      case 'inventory':
+        return (
+          <PageHero
+            icon={<Boxes className="w-5 h-5" />}
+            eyebrow="کارتابل عملیات"
+            title="مدیریت کارگو و موجودی انبار"
+            subtitle="پرونده‌های وارداتی، وضعیت ترخیص، ارزش‌گذاری سبد و خروجی CSV — همگی متصل به سرور و ذخیره‌شده."
+            stats={[
+              { label: 'پرونده فعال', value: activeShipments.toLocaleString('fa-IR'), tone: 'text-indigo-600' },
+              { label: 'در گمرک', value: customsCount.toLocaleString('fa-IR'), tone: 'text-amber-600' },
+              { label: 'ارزش سبد', value: `${fmtBillion(portfolioValue)} B`, tone: 'text-emerald-600' },
+            ]}
+          />
+        );
+      case 'pipeline':
+        return (
+          <PageHero
+            icon={<Workflow className="w-5 h-5" />}
+            eyebrow="چرخه عمر پرونده"
+            title="گردش کار واردات — از ثبت سفارش تا انبار"
+            subtitle="کارت‌ها را بین مراحل جابه‌جا کنید؛ هر حرکت در تایم‌لاین پرونده ثبت و روی سرور ذخیره می‌شود."
+            stats={[
+              { label: 'در گمرک', value: customsCount.toLocaleString('fa-IR'), tone: 'text-amber-600' },
+              { label: 'در جریان', value: activeShipments.toLocaleString('fa-IR'), tone: 'text-indigo-600' },
+            ]}
+          />
+        );
+      case 'hscode_resolver':
+        return (
+          <PageHero
+            icon={<Scale className="w-5 h-5" />}
+            eyebrow="تعرفه گمرکی"
+            title="تفکیک هوشمند کد تعرفه (HS Code)"
+            subtitle="پیشنهاد هوشمند + دایرکتوری رسمی تعرفه‌ها با حقوق ورودی، سود بازرگانی، مجوزها و شناسنامه استنادی هر کد."
+          />
+        );
+      case 'intelligence':
+        return (
+          <PageHero
+            icon={<Sparkles className="w-5 h-5" />}
+            eyebrow="هوش تجاری"
+            title="کاوشگر اسناد و موتورهای استنادی تجارت"
+            subtitle="نتایج ساختاریافته از منابع بین‌المللی با وضعیت راستی‌آزمایی و امتیاز اطمینان."
+          />
+        );
+      case 'assessment':
+        return (
+          <PageHero
+            icon={<FileCheck2 className="w-5 h-5" />}
+            eyebrow="ویزارد ۷ مرحله‌ای"
+            title="ارزیابی جامع امکان‌سنجی واردات"
+            subtitle="تعرفه، تأمین‌کننده، بهای تمام‌شده و حاشیه سود — با موتور محاسباتی رسمی و آرشیو پرونده."
+          />
+        );
+      case 'sourcing':
+        return (
+          <PageHero
+            icon={<Globe2 className="w-5 h-5" />}
+            eyebrow="Due Diligence"
+            title="اعتبارسنجی تأمین‌کنندگان خارجی"
+            subtitle={`ماتریس ممیزی ${suppliers.length.toLocaleString('fa-IR')} تأمین‌کننده + تحلیل هوشمند ریسک واسطه‌ها و تحریم‌ها.`}
+          />
+        );
+      case 'rfq':
+        return (
+          <PageHero
+            icon={<Send className="w-5 h-5" />}
+            eyebrow="مکاتبات خرید"
+            title="صدور استعلام قیمت بین‌المللی (RFQ)"
+            subtitle="پیش‌نویس رسمی پروفرما با اینکوترمز ۲۰۲۰، شرایط پرداخت امن و گواهی‌های الزامی."
+          />
+        );
+      case 'analytics':
+        return (
+          <PageHero
+            icon={<BarChart3 className="w-5 h-5" />}
+            eyebrow="تحلیل و مالی"
+            title="داشبورد تحلیلی سبد وارداتی"
+            subtitle="نمودارهای زنده از داده واقعی کارتابل + موتور بهای تمام‌شده و تنظیمات نرخ ارز."
+            stats={[{ label: 'ارزش سبد', value: `${fmtBillion(portfolioValue)} B`, tone: 'text-emerald-600' }]}
+          />
+        );
+      case 'provenance':
+        return (
+          <PageHero
+            icon={<Database className="w-5 h-5" />}
+            eyebrow="شفافیت داده"
+            title="شناسنامه منابع داده و استنادهای رسمی"
+            subtitle="مرجع هر داده، متدولوژی محاسبات و تاریخ بازبینی کدهای تعرفه."
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div dir="rtl" className="flex h-screen w-screen overflow-hidden bg-[#F8FAFC] font-sans antialiased text-slate-900 select-none">
-      {/* Dark Sidebar — سمت راست در RTL */}
+    <div dir="rtl" className="flex h-screen w-screen overflow-hidden tj-canvas font-sans antialiased text-slate-900 select-none">
+      {/* سایدبار تیره — سمت راست در RTL */}
       <Sidebar
         activeView={activeView}
         setActiveView={setActiveView}
@@ -78,8 +185,8 @@ const Workspace: React.FC = () => {
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
 
-      {/* Main Workspace */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#F8FAFC]">
+      {/* بوم کار روشن */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header
           activeView={activeView}
           searchQuery={searchQuery}
@@ -90,7 +197,7 @@ const Workspace: React.FC = () => {
           totalUnits={inventory.length}
         />
 
-        <div className="p-3 md:p-6 space-y-4 flex-1 overflow-hidden flex flex-col min-h-0">
+        <div className="p-3 md:p-5 space-y-3.5 flex-1 overflow-hidden flex flex-col min-h-0">
           {!ready && <ViewSkeleton />}
           {ready && error && <FatalError message={error} onRetry={retry} />}
 
@@ -102,8 +209,10 @@ const Workspace: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.22, ease: 'easeOut' }}
-                className="flex-1 flex flex-col min-h-0"
+                className="flex-1 flex flex-col min-h-0 gap-3.5"
               >
+                {heroFor(activeView)}
+
                 {activeView === 'inventory' && (
                   <>
                     <MetricsOverview inventory={inventory} />
@@ -119,13 +228,13 @@ const Workspace: React.FC = () => {
                 {activeView === 'pipeline' && <CargoPipeline />}
 
                 {activeView === 'hscode_resolver' && (
-                  <div className="flex-1 overflow-y-auto min-h-0 pr-0.5">
+                  <div className="flex-1 overflow-y-auto min-h-0 pr-0.5 space-y-3.5">
                     <HsCodeResolver onSelectForAssessment={handleStartAssessmentWithScenario} />
                   </div>
                 )}
 
                 {activeView === 'provenance' && (
-                  <div className="flex-1 overflow-y-auto min-h-0 pr-0.5">
+                  <div className="flex-1 overflow-y-auto min-h-0 pr-0.5 space-y-3.5">
                     <DataProvenanceView />
                   </div>
                 )}
@@ -156,20 +265,17 @@ const Workspace: React.FC = () => {
                 )}
 
                 {activeView === 'assessment' && (
-                  <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-4">
-                    <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl font-bold border border-blue-100 shadow-xs">
-                      ✨
+                  <div className="flex-1 tj-card flex flex-col items-center justify-center p-10 text-center space-y-4">
+                    <div className="tj-grad tj-grad-ring w-16 h-16 rounded-3xl flex items-center justify-center text-white shadow-lg">
+                      <FileCheck2 className="w-7 h-7" />
                     </div>
                     <div className="max-w-md space-y-1.5">
-                      <h3 className="text-base font-bold text-slate-800">سامانه ارزیابی جامع واردات و ترخیص (۷ مرحله‌ای)</h3>
+                      <h3 className="text-base font-black text-slate-800">سامانه ارزیابی جامع واردات و ترخیص (۷ مرحله‌ای)</h3>
                       <p className="text-xs text-slate-500 leading-relaxed">
-                        جهت بررسی سودآوری، طبقه‌بندی تعرفه، گروه‌بندی کالایی صمت، اعتبارسنجی تأمین‌کننده خارجی و محاسبه بهای تمام‌شده روی دکمه زیر کلیک نمایید.
+                        بررسی سودآوری، طبقه‌بندی تعرفه، گروه‌بندی کالایی صمت، اعتبارسنجی تأمین‌کننده خارجی و محاسبه بهای تمام‌شده.
                       </p>
                     </div>
-                    <button
-                      onClick={() => setIsAssessmentOpen(true)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition-colors"
-                    >
+                    <button onClick={() => setIsAssessmentOpen(true)} className="tj-btn tj-btn-primary">
                       شروع ویزارد ارزیابی کالا
                     </button>
                   </div>
@@ -180,7 +286,7 @@ const Workspace: React.FC = () => {
         </div>
       </main>
 
-      {/* Modals */}
+      {/* مودال‌ها */}
       <TradeAssessmentModal
         isOpen={isAssessmentOpen}
         onClose={() => {

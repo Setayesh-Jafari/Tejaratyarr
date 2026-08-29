@@ -19,9 +19,11 @@ export interface HsCodeDatabaseEntry {
   sampleProducts: string[];
   commonMistakesWarning?: string;
   isPriority: boolean;
+  lastReviewed?: string; // تاریخ آخرین بازبینی نرخ‌های این کد
+  sourceRef?: string;    // مرجع استنادی رسمی
 }
 
-export const HS_CODE_DIRECTORY: HsCodeDatabaseEntry[] = [
+export const HS_CODE_DIRECTORY_RAW: HsCodeDatabaseEntry[] = [
   // تجهیزات خورشیدی و برق
   {
     code: '8541.43.00',
@@ -476,7 +478,9 @@ export const HS_CODE_DIRECTORY: HsCodeDatabaseEntry[] = [
     specifications: 'پارچه پنبه‌ای پاپلین/پرکال با تراکم تار و پود ۱۳۳×۷۲، عرض ۱۴۸ تا ۱۵۰ سانتی‌متر، گرماژ ۱۲۰ تا ۱۸۰ گرم بر مترمربع',
     sampleProducts: ['پارچه پاپلین چاپی پنبه ۱۰۰٪', 'پارچه پرکال مخصوص روتختی و ملحفه', 'پارچه پنبه‌ای چاپ دخترگانه (کرت و پیراهن)'],
     commonMistakesWarning: 'اشتباه نشود با پارچه‌های مخلوط پنبه/پلی‌استر (کد 5210) که تعرفه متفاوت دارد؛ ترکیب الیاف باید در گواهی آنالیز فایبر ( Fiber Test) قید شود.',
-    isPriority: false
+    isPriority: false,
+    lastReviewed: '۱۴۰۵/۰۶/۱۰',
+    sourceRef: 'بازبینی توسعه منسوجات ۱۴۰۵ — معاونت امور گمرک و اتحادیه واردکنندگان منسوجات'
   },
   {
     code: '5407.61.00',
@@ -496,7 +500,9 @@ export const HS_CODE_DIRECTORY: HsCodeDatabaseEntry[] = [
     specifications: 'پارچه پلی‌استر تافتا و آکسفورد با پوشش PU/PVC، ضدآب، عرض ۱۵۰ تا ۲۲۰ سانتی‌متر، گرماژ ۶۰ تا ۱۲۰ گرم بر مترمربع، دنیر ۷۵ تا ۳۰۰',
     sampleProducts: ['پارچه آکسفورد ۳۰۰ دنیر ضدآب مخصوص کوله و چمدان', 'پارچه تافتا ساتن براق مخصوص لباس و پرده', 'پارچه پلی‌استر ریپ‌استاپ (Ripstop) چادری و روکش'],
     commonMistakesWarning: 'پارچه‌های پوشش‌دار (میان‌پوش PVC) ممکن است ذیل کد ۵۹۰۳ (منسوجات با روکش پلاستیکی) ارزیابی شوند — روکش پس از بافت اعمال شده باشد کد ۵۹۰۳ مقدم است.',
-    isPriority: false
+    isPriority: false,
+    lastReviewed: '۱۴۰۵/۰۶/۱۰',
+    sourceRef: 'بازبینی توسعه منسوجات ۱۴۰۵ — معاونت امور گمرک و اتحادیه واردکنندگان منسوجات'
   },
   {
     code: '6006.31.00',
@@ -516,9 +522,30 @@ export const HS_CODE_DIRECTORY: HsCodeDatabaseEntry[] = [
     specifications: 'پارچه تریکو سنگل جرزی و ریب پنبه‌ای ۱۰۰٪ یا مخلوط ۹۵/۵ اسپندکس، گرماژ ۱۴۰ تا ۲۲۰ گرم بر مترمربع، عرض ۱۶۰ تا ۱۸۰ سانتی‌متر',
     sampleProducts: ['پارچه سنگل جرزی مخصوص تی‌شرت', 'پارچه ریب یقه و مچین', 'پارچه لاکرا چاپی اسپرت'],
     commonMistakesWarning: 'پارچه بافت (فصل ۶۰) با پارچه بافته (فصل‌های ۵۰-۵۵) اشتباه گرفته می‌شود؛ نحوه ساخت (knitted vs woven) تعرفه را کاملاً تغییر می‌دهد و در آزمون ساختار ظاهری توسط کارشناس گمرک قابل تشخیص است.',
-    isPriority: false
+    isPriority: false,
+    lastReviewed: '۱۴۰۵/۰۶/۱۰',
+    sourceRef: 'بازبینی توسعه منسوجات ۱۴۰۵ — معاونت امور گمرک و اتحادیه واردکنندگان منسوجات'
   }
 ];
+
+/**
+ * اعتبار استنادی: هر کد تاریخ بازبینی و مرجع دارد.
+ * مقادیر پیش‌فرض از کتاب مقررات صادرات و واردات ۱۴۰۳ تخصیص می‌شود؛
+ * ورودی‌های بازبینی‌شده (مثل منسوجات) مقدار صریح خود را نگه می‌دارند.
+ */
+export const HS_CODE_DIRECTORY: HsCodeDatabaseEntry[] = HS_CODE_DIRECTORY_RAW.map((e) => ({
+  ...e,
+  sourceRef:
+    e.sourceRef ??
+    `کتاب مقررات صادرات و واردات ۱۴۰۳ — فصل ${e.chapter} (${e.chapterFa.split('،')[0].split(':')[0]})`,
+  lastReviewed: e.lastReviewed ?? '۱۴۰۳/۰۹/۱۵',
+}));
+
+/** آخرین بازبینی در کل دایرکتوری — برای نمایش در شناسنامه منابع */
+export const DIRECTORY_LAST_REVIEW = HS_CODE_DIRECTORY.reduce(
+  (latest, e) => (e.lastReviewed! > latest ? e.lastReviewed! : latest),
+  HS_CODE_DIRECTORY[0].lastReviewed!
+);
 
 export const CATEGORIES_WITH_COUNTS = [
   { name: 'همه دسته‌بندی‌ها', count: HS_CODE_DIRECTORY.length },

@@ -111,55 +111,29 @@ export const SupplierEvaluation: React.FC<SupplierEvaluationProps> = ({
 
   return (
     <div id="supplier-evaluation-matrix" className="flex-1 flex flex-col min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden text-right">
-      {/* Top Banner */}
-      <div className="bg-slate-900 text-white p-5 border-b border-slate-800 flex-shrink-0 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="bg-blue-500/20 text-blue-300 border border-blue-400/30 text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-                <span>ماتریس راستی‌آزمایی و اعتبارسنجی تأمین‌کنندگان بین‌المللی (Due Diligence Matrix)</span>
-              </span>
-              <span className="text-slate-400 text-xs font-mono">
-                {suppliers.length} کمپانی و کارخانه ممیزی‌شده
-              </span>
-            </div>
-            <h2 className="text-lg md:text-xl font-bold text-white tracking-tight">
-              غربالگری اصالت صادرکنندگان خارجی و کانال‌های امن پرداخت ارزی
-            </h2>
-            <p className="text-xs text-slate-300 max-w-3xl leading-relaxed">
-              هر کمپانی بر اساس استعلام از <strong className="text-blue-300">اتاق‌های بازرگانی ملی</strong>، رجیستری شرکتی <strong className="text-amber-300">Baidu / SAMR</strong>، ممیزی‌های <strong className="text-emerald-300">TÜV / SGS</strong> و پایگاه‌های مالیاتی اروپا و خلیج فارس احراز اصالت شده است.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 text-center min-w-[120px]">
-              <div className="text-[11px] text-slate-400">تأمین‌کنندگان منطبق</div>
-              <div className="text-xl font-black font-mono text-emerald-400">{filteredSuppliers.length} شرکت</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Global Search Bar */}
-        <div className="mt-4 relative">
+      {/* نوار ابزار فشرده — جستجو و شمارش (هویت جدید) */}
+      <div className="bg-slate-50 border-b border-slate-200 p-4 flex flex-col md:flex-row md:items-center gap-3 flex-shrink-0">
+        <div className="relative flex-1">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="جستجوی نام کارخانه، کشور، نوع کالای تولیدی (مثلاً پنل خورشیدی، فولاد، سونوگرافی)، استاندارد..."
-            className="w-full bg-slate-800/90 border border-slate-700 text-white rounded-xl py-2.5 pr-10 pl-24 text-xs md:text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 font-sans shadow-inner"
+            placeholder="جستجوی نام کارخانه، کشور، نوع کالای تولیدی (پنل خورشیدی، فولاد، سونوگرافی)، استاندارد…"
+            className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl py-2.5 pr-10 pl-4 text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-300 font-sans"
           />
           <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-3" />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute left-3 top-2.5 text-xs text-slate-400 hover:text-white bg-slate-700 px-2 py-0.5 rounded-md"
+              className="absolute left-3 top-2.5 text-xs text-slate-400 hover:text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md"
             >
               پاک کردن
             </button>
           )}
+        </div>
+        <div className="tj-grad text-white rounded-xl px-4 py-2.5 text-center min-w-[130px] shadow-sm">
+          <div className="text-[10px] opacity-90">تأمین‌کنندگان منطبق</div>
+          <div className="text-lg font-black font-mono">{filteredSuppliers.length.toLocaleString('fa-IR')} شرکت</div>
         </div>
       </div>
 

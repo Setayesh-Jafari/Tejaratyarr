@@ -17,6 +17,7 @@ import {
   Award
 } from 'lucide-react';
 import { DATA_PROVENANCE_SOURCES, LANDED_COST_METHODOLOGY } from '../data/provenanceData';
+import { HS_CODE_DIRECTORY, DIRECTORY_LAST_REVIEW } from '../data/hscodeDirectory';
 
 export const DataProvenanceView: React.FC = () => {
   const [selectedSourceId, setSelectedSourceId] = useState<string>(DATA_PROVENANCE_SOURCES[0].id);
@@ -25,33 +26,69 @@ export const DataProvenanceView: React.FC = () => {
 
   return (
     <div id="provenance-view-container" className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 relative overflow-hidden shadow-xl text-white">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -translate-x-1/2 -translate-y-1/2" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-medium border border-blue-500/30 mb-2">
-              <Database className="w-3.5 h-3.5" />
-              <span>شفافیت کامل داده‌ها، شناسه مراجع گمرکی و متدولوژی محاسبات</span>
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
-              شناسنامه منابع داده و استنادهای رسمی بازرگانی
-            </h1>
-            <p className="text-slate-300 text-sm mt-1 max-w-3xl leading-relaxed">
-              تمام اطلاعات موجودی کارگوها، آمار روند واردات، نرخ‌های گمرکی و بهای تمام‌شده در این سامانه از ترکیب داده‌های مراجع رسمی حاکمیتی (گمرک ایران، سامانه جامع تجارت، سامانه ارزش TSC) و پایگاه‌های آمار بازرگانی بین‌المللی (ITC Trade Map، بارنامه‌های ImportYeti و زنجیره تأمین Panjiva) استخراج شده‌اند.
-            </p>
+      {/* خلاصه وضعیت استنادی */}
+      <div className="tj-card p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <p className="text-xs text-slate-600 leading-relaxed max-w-3xl flex-1">
+          داده‌های این سامانه از ترکیب مراجع حاکمیتی (گمرک ایران، سامانه جامع تجارت، TSC) و
+          پایگاه‌های بین‌المللی (ITC Trade Map، ImportYeti، Panjiva) استخراج شده‌اند؛
+          هر عدد در سامانه به منبع خود متصل است.
+        </p>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-center">
+            <div className="text-[10px] text-slate-400 font-bold">پایگاه‌های مرجع</div>
+            <div className="text-base font-black font-mono text-indigo-700">{DATA_PROVENANCE_SOURCES.length.toLocaleString('fa-IR')} سازمان</div>
           </div>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-center">
+            <div className="text-[10px] text-slate-400 font-bold">سطح مستندسازی</div>
+            <div className="text-base font-black font-mono text-emerald-700">۱۰۰٪</div>
+          </div>
+        </div>
+      </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="bg-slate-800/80 border border-slate-700 rounded-lg p-3 text-center">
-              <div className="text-xs text-slate-400">تعداد پایگاه‌های مرجع</div>
-              <div className="text-xl font-bold font-mono text-blue-400">{DATA_PROVENANCE_SOURCES.length} سازمان</div>
-            </div>
-            <div className="bg-slate-800/80 border border-slate-700 rounded-lg p-3 text-center">
-              <div className="text-xs text-slate-400">سطح اعتبارسنجی</div>
-              <div className="text-xl font-bold font-mono text-emerald-400">۱۰۰٪ مستند</div>
-            </div>
-          </div>
+      {/* شناسنامه اعتبار کدهای تعرفه — مرجع و تاریخ بازبینی هر کد */}
+      <div className="tj-card p-4 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
+            <Award className="w-4 h-4 text-indigo-600" />
+            شناسنامه اعتبار کدهای تعرفه ({HS_CODE_DIRECTORY.length.toLocaleString('fa-IR')} کد)
+          </h3>
+          <span className="tj-chip">آخرین بازبینی کل دایرکتوری: {DIRECTORY_LAST_REVIEW}</span>
+        </div>
+        <p className="text-[11px] text-slate-500 leading-relaxed">
+          هر کد تعرفه در سامانه، مرجع استنادی و تاریخ آخرین بازبینی نرخ‌های خود را دارد؛ پیش از ثبت سفارش، اعتبار زمانی نرخ‌ها را بررسی کنید. نرخ‌های قدیمی‌تر از یک فصل باید با کتاب مقررات سال جاری تطبیق شوند.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-right text-[11px] border-collapse min-w-[680px]">
+            <thead className="bg-slate-50 text-slate-400 border-b border-slate-200">
+              <tr>
+                <th className="px-3 py-2 font-bold">کد تعرفه</th>
+                <th className="px-3 py-2 font-bold">عنوان</th>
+                <th className="px-3 py-2 font-bold">فصل</th>
+                <th className="px-3 py-2 font-bold">مرجع استنادی</th>
+                <th className="px-3 py-2 font-bold">آخرین بازبینی</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {HS_CODE_DIRECTORY.map((e) => {
+                const isFresh = e.lastReviewed?.startsWith('۱۴۰۵');
+                return (
+                  <tr key={e.code} className="hover:bg-slate-50/70">
+                    <td className="px-3 py-2 font-mono font-bold text-indigo-800" dir="ltr">{e.code}</td>
+                    <td className="px-3 py-2 font-medium text-slate-700 max-w-[240px] truncate" title={e.titleFa}>{e.titleFa}</td>
+                    <td className="px-3 py-2 font-mono text-slate-500" dir="ltr">{e.chapter}</td>
+                    <td className="px-3 py-2 text-slate-500 max-w-[260px] truncate" title={e.sourceRef}>{e.sourceRef}</td>
+                    <td className="px-3 py-2">
+                      <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border ${
+                        isFresh ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'
+                      }`}>
+                        {e.lastReviewed}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
 
