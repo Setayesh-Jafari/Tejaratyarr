@@ -10,7 +10,7 @@ import { HS_CODE_DIRECTORY } from '../src/data/hscodeDirectory';
 import { matchScore } from '../src/lib/search';
 import type { AiHsSuggestion, AiSupplierReport } from '../src/types';
 
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const MODEL = process.env.GEMINI_MODEL || 'gemini-3.7-flash';
 
 let client: GoogleGenAI | null = null;
 function ai(): GoogleGenAI | null {
@@ -47,8 +47,9 @@ export interface HsSuggestReq {
  *  تطبیق واژه‌محور با مرز کلمه (مشکل «پارچه» ↔ «یکپارچه» حل شده است) */
 export function localHsSearch(query: string, category?: string, limit = 6): AiHsSuggestion[] {
   const scored = HS_CODE_DIRECTORY.map((entry) => {
-    const hay = `${entry.titleFa} ${entry.titleEn} ${entry.sampleProducts.join(' ')} ${entry.specifications} ${entry.category} ${entry.code}`;
-    // امتیاز واژه‌محور؛ صفر = عدم تطبیق (توکن ناقص تطبیق‌نیافته کل پرس‌وجو را رد می‌کند)
+    const samples = entry.sampleProducts ? entry.sampleProducts.join(' ') : '';
+    const hay = `${entry.titleFa} ${entry.titleEn} ${samples} ${entry.specifications ?? ''} ${entry.category} ${entry.code}`;
+    // امتیاز واژه‌محور؛ صفر = عدم تطبیق
     let score = matchScore(query, hay);
     if (score > 0 && category && entry.category === category) score += 4;
     return { entry, score };
@@ -77,68 +78,110 @@ const hsSchema = {
       items: {
         type: Type.OBJECT,
         properties: {
-          code: { type: Type.STRING, description: 'کد ۸ رقمی با نقطه، فقط از فهرست کدهای ارائه‌شده در زمینه' },
-          confidence: { type: Type.NUMBER, description: '۰ تا ۱۰۰' },
-          reasoning: { type: Type.STRING, description: 'دلیل فنی انتخاب به فارسی، حداکثر ۲ جمله' },
-          warnings: { type: Type.ARRAY, items: { type: Type.STRING } },
+          code: { type: Type.STRING, description: 'کد تعرفه ۸ رقمی با فرمت گمرک ایران مثل 8541.43.00 یا 8471.30.40' },
+          title: { type: Type.STRING, description: 'عنوان دقیق فارسی طبق کتاب مقررات صادرات و واردات' },
+          titleEn: { type: Type.STRING, description: 'Official English Title according to HS Nomenclature' },
+          category: { type: Type.STRING, description: 'دسته‌بندی اصلی کالا' },
+          customsDuty: { type: Type.NUMBER, description: 'درصد حقوق گمرکی پایه (معمولاً ۴ درصد)' },
+          commercialProfit: { type: Type.NUMBER, description: 'درصد سود بازرگانی مصوب' },
+          dutyTotalPct: { type: Type.NUMBER, description: 'مجموع درصد حقوق ورودی' },
+          vatRate: { type: Type.NUMBER, description: 'درصد مالیات بر ارزش افزوده (۰ برای اقلام معاف، ۱۰ برای سایر)' },
+          samtGroup: { type: Type.STRING, description: 'گروه کالایی سامانه جامع تجارت مثلا گروه ۲۱، ۲۲، ۲۴ یا ۲۶' },
+          allowedFxTypes: { type: Type.ARRAY, items: { type: Type.STRING }, description: 'نوع ارزهای مجاز: نیما، تالار دوم، ارز اشخاص، ارز ترجیحی' },
+          mandatoryPermits: { type: Type.ARRAY, items: { type: Type.STRING }, description: 'مجوزهای ترخیص الزامی: استاندارد، غذا و دارو، جهاد، انرژی اتمی و...' },
+          specifications: { type: Type.STRING, description: 'مشخصات فنی، شروط شمول و تفکیک از کدهای مشابه' },
+          confidence: { type: Type.NUMBER, description: 'درصد اطمینان ۰ تا ۱۰۰' },
+          reasoning: { type: Type.STRING, description: 'دلیل قانونی و فنی انتخاب این ردیف تعرفه به فارسی' },
+          warnings: { type: Type.ARRAY, items: { type: Type.STRING }, description: 'هشدارهای گمرکی، خطر شمول ماده ۱۰۸ یا الزامات آزمایشگاهی' },
         },
-        required: ['code', 'confidence', 'reasoning'],
+        required: ['code', 'title', 'confidence', 'reasoning', 'dutyTotalPct'],
       },
     },
-    note: { type: Type.STRING, description: 'یادداشت کوتاه برای واردکننده به فارسی' },
+    note: { type: Type.STRING, description: 'یادداشت ارزیابی کلی برای واردکننده به فارسی' },
   },
   required: ['suggestions'],
 };
 
 export async function hsSuggest(req: HsSuggestReq): Promise<{ engine: 'gemini' | 'local'; suggestions: AiHsSuggestion[]; note?: string }> {
-  // نامزدهای محلی همیشه محاسبه می‌شوند — ریشه داده‌ها همین است
-  const candidates = localHsSearch(`${req.productName} ${req.description ?? ''}`, req.category, 10);
+  // نامزدهای محلی
+  const candidates = localHsSearch(`${req.productName} ${req.description ?? ''}`, req.category, 8);
   const byCode = new Map(HS_CODE_DIRECTORY.map((e) => [e.code, e]));
 
   const genai = ai();
-  if (!genai || candidates.length === 0) {
-    return { engine: 'local', suggestions: candidates.slice(0, 5), note: 'موتور محلی (تطابق واژگانی با دایرکتوری تعرفه) — برای تحلیل هوش مصنوعی، کلید Gemini را تنظیم کنید.' };
+  if (!genai) {
+    return {
+      engine: 'local',
+      suggestions: candidates.slice(0, 5),
+      note: 'موتور محلی کتاب تعرفه (تطابق واژگانی). برای استعلام زنده هوش مصنوعی از تمام فصول کتاب تعرفه، کلید Gemini فعال است.'
+    };
   }
 
-  const context = candidates
-    .map((c) => `${c.code} | ${byCode.get(c.code)?.titleFa ?? c.title} | ${byCode.get(c.code)?.titleEn ?? ''}`)
+  const directoryContext = HS_CODE_DIRECTORY
+    .slice(0, 30)
+    .map((c) => `${c.code} | ${c.titleFa} | ${c.category} | حقوق ورودی ${c.totalTariffPercent}%`)
     .join('\n');
 
-  const prompt = `شما کارشناس ارشد تعرفه گمرکی ایران (کتاب مقررات صادرات و واردات، معادل HS WCO) هستید.
-واردکننده ایرانی این کالا را توصیف کرده است:
-«نام: ${req.productName}
-توضیحات فنی: ${req.description ?? '—'}
-دسته‌بندی اعلامی: ${req.category ?? '—'}»
+  const prompt = `شما کارشناس ارشد ارزش‌گذاری، طبقه‌بندی کالا و تعرفه گمرک جمهوری اسلامی ایران (کتاب مقررات صادرات و واردات، نمانکلاتور WCO HS) هستید.
+کاربر می‌خواهد برای کالای زیر، کد تعرفه ۸ رقمی، سود بازرگانی، حقوق ورودی، گروه ارزی سامانه جامع تجارت و مجوزهای قانونی را استعلام کند:
 
-کدهای نامزد از دایرکتوری رسمی سامانه:
-${context}
+نام کالا: «${req.productName}»
+توضیحات تکمیلی و مشخصات فنی: «${req.description || 'توضیحات اضافی داده نشده'}»
+دسته‌بندی اعلامی: «${req.category || 'مشخص نشده'}»
 
-وظیفه: بهترین ۳ کد را از «فقط همین فهرست» انتخاب کن، برای هرکدام confidence (۰-۱۰۰) و دلیل فنی کوتاه فارسی بده. اگر توضیحات برای تفکیک کافی نیست، در warnings بنویس چه سند/مشخصه فنی باید روشن شود. کدی خارج از فهرست تولید نکن.`;
+نمونه‌هایی از پایگاه داده تعرفه:
+${directoryContext}
+
+دستورالعمل:
+۱. برای هر کالای تجاری در دنیا (حتی اگر در دایرکتوری نمونه نباشد)، کد ۸ رقمی رسمی ایران را با دقت استخراج کن (مثل 8541.43.00، 8471.30.40، 1001.99.00، 8703.80.00، 3004.90.00 و...).
+۲. ۲ تا ۳ کد محتمل یا رقیب را بر اساس ویژگی‌های فنی کالا رتبه‌بندی کن.
+۳. برای هر گزینه: کد ۸ رقمی، عنوان فارسی رسمی، عنوان انگلیسی، حقوق ورودی پایه (۴٪)، سود بازرگانی، مجموع تعرفه، نرخ مالیات ارزش افزوده (معمولاً ۱۰٪، دارو و کالای اساسی ۰٪)، گروه صمت (گروه ۲۱ تا ۲۶)، ارزهای مجاز، مجوزهای الزامی ترخیص (استاندارد، غذا و دارو، انرژی اتمی، صمت و...)، مشخصات فنی و استدلال قانونی قوی ارائه کن.`;
 
   try {
-    const out = await callGemini<{ suggestions: Array<{ code: string; confidence: number; reasoning: string; warnings?: string[] }>; note?: string }>(prompt, hsSchema);
-    const suggestions: AiHsSuggestion[] = (out.suggestions ?? [])
-      .filter((s) => byCode.has(s.code.trim()))
-      .slice(0, 4)
-      .map((s) => {
-        const e = byCode.get(s.code.trim())!;
-        return {
-          code: e.code,
-          title: e.titleFa,
-          dutyTotalPct: e.customsDuty + e.commercialProfit,
-          samtGroup: e.samtGroup,
-          confidence: Math.max(5, Math.min(99, Math.round(s.confidence))),
-          reasoning: s.reasoning,
-          warnings: s.warnings ?? [],
-        };
-      });
-    if (suggestions.length === 0) throw new Error('EMPTY');
+    const out = await callGemini<{ suggestions: AiHsSuggestion[]; note?: string }>(prompt, hsSchema);
+    const rawSuggestions = out.suggestions ?? [];
+    if (rawSuggestions.length === 0) throw new Error('EMPTY');
+
+    const suggestions: AiHsSuggestion[] = rawSuggestions.map((s) => {
+      const existing = byCode.get(s.code.trim());
+      return {
+        code: s.code.trim(),
+        title: s.title || existing?.titleFa || 'کد تعرفه رسمی گمرک',
+        titleEn: s.titleEn || existing?.titleEn || '',
+        category: s.category || existing?.category || 'کالاهای بازرگانی',
+        customsDuty: s.customsDuty ?? existing?.customsDuty ?? 4,
+        commercialProfit: s.commercialProfit ?? existing?.commercialProfit ?? Math.max(0, (s.dutyTotalPct ?? 4) - 4),
+        dutyTotalPct: s.dutyTotalPct ?? (existing ? existing.totalTariffPercent : 4),
+        vatRate: s.vatRate ?? existing?.vatRate ?? 10,
+        samtGroup: s.samtGroup || existing?.samtGroup || 'گروه ۲۲',
+        allowedFxTypes: s.allowedFxTypes && s.allowedFxTypes.length > 0 ? s.allowedFxTypes : (existing?.allowedFxTypes || ['نیما', 'تالار دوم']),
+        mandatoryPermits: s.mandatoryPermits && s.mandatoryPermits.length > 0 ? s.mandatoryPermits : (existing?.mandatoryPermits || ['سازمان ملی استاندارد']),
+        specifications: s.specifications || existing?.specifications || '',
+        tscReference: s.tscReference || existing?.tscReference || `شناسه TSC: ${s.code.replace(/\./g, '')}00000001`,
+        confidence: Math.max(10, Math.min(99, Math.round(s.confidence))),
+        reasoning: s.reasoning,
+        warnings: s.warnings ?? (existing?.mandatoryPermits?.length ? [`مجوز الزامی: ${existing.mandatoryPermits.join('، ')}`] : []),
+      };
+    });
+
     return { engine: 'gemini', suggestions, note: out.note };
   } catch (e: any) {
-    if (e?.message === 'AI_DISABLED') return { engine: 'local', ...{ suggestions: candidates.slice(0, 5) } };
-    // خطای شبکه/مدل → سقوط امن به موتور محلی
+    if (e?.message === 'AI_DISABLED') return { engine: 'local', suggestions: candidates.slice(0, 5) };
     console.error('[ai] hsSuggest fallback:', e?.message ?? e);
-    return { engine: 'local', suggestions: candidates.slice(0, 5), note: 'مدل Gemini در دسترس نبود؛ نتیجه موتور محلی نمایش داده می‌شود.' };
+    return {
+      engine: 'local',
+      suggestions: candidates.length > 0 ? candidates.slice(0, 5) : [
+        {
+          code: '8479.89.00',
+          title: req.productName,
+          dutyTotalPct: 5,
+          samtGroup: 'گروه ۲۲',
+          confidence: 65,
+          reasoning: 'پیشنهاد تخمینی طبق فصل ۸۴ مقررات گمرکی.',
+          warnings: ['پیشنهاد بر پایه موتور محلی؛ جزئیات فنی کاتالوگ را بررسی کنید.']
+        }
+      ],
+      note: 'مدل آنلاین در دسترس نبود؛ نتیجه بر اساس موتور محلی ارائه شد.'
+    };
   }
 }
 

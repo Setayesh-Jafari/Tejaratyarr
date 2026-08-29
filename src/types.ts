@@ -284,8 +284,17 @@ export interface AppSettings {
 export interface AiHsSuggestion {
   code: string;
   title: string;
+  titleEn?: string;
+  category?: string;
+  customsDuty?: number;
+  commercialProfit?: number;
   dutyTotalPct?: number;
+  vatRate?: number;
   samtGroup?: string;
+  allowedFxTypes?: string[];
+  mandatoryPermits?: string[];
+  specifications?: string;
+  tscReference?: string;
   confidence: number; // 0-100
   reasoning: string;
   warnings?: string[];
