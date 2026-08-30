@@ -88,7 +88,7 @@ export const FatalError: React.FC<{ message: string; onRetry: () => void }> = ({
         <p className="text-xs text-slate-500 leading-relaxed">{message}</p>
         <p className="text-[11px] text-slate-400">سرور را با دستور <code dir="ltr" className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">npm run server</code> اجرا کنید.</p>
       </div>
-      <button onClick={onRetry} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-colors">
+      <button onClick={onRetry} className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-colors">
         تلاش مجدد
       </button>
     </div>

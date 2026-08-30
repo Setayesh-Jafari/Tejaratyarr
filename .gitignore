@@ -1,11 +1,10 @@
 node_modules/
 build/
-dist/
 coverage/
 .DS_Store
 *.log
 .env*
 !.env.example
 
-# runtime data store (JSON db)
-data/
+# runtime data store (JSON db) — فقط پوشه‌ی data در ریشه‌ی مخزن
+/data/

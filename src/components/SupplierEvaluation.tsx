@@ -1,40 +1,40 @@
 import React, { useState, useMemo } from 'react';
 import { SupplierRecord } from '../types';
 import { AiSupplierCheckCard } from './AiAssist';
+import { SupplierFormModal } from './SupplierFormModal';
+import { useStore } from '../store/AppStore';
 import { 
-  ShieldCheck, 
   CheckCircle2, 
   Globe, 
   Mail, 
   Send, 
   AlertTriangle, 
-  ExternalLink,
   Search,
   PackageCheck,
   Building2,
-  Filter,
-  Check,
-  Clock,
-  Sparkles,
-  Phone
+  Phone,
+  Plus,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 
 interface SupplierEvaluationProps {
   suppliers: SupplierRecord[];
   onOpenRfqWithSupplier: (supplier: SupplierRecord) => void;
-  onOpenAssessmentForProduct?: (category: string, supplierName: string) => void;
 }
 
 export const SupplierEvaluation: React.FC<SupplierEvaluationProps> = ({
   suppliers,
-  onOpenRfqWithSupplier,
-  onOpenAssessmentForProduct
+  onOpenRfqWithSupplier
 }) => {
+  const { upsertSupplier, deleteSupplier } = useStore();
   const [filterCountry, setFilterCountry] = useState('همه کشورها');
   const [filterCategory, setFilterCategory] = useState('همه کالاها و دسته‌ها');
   const [filterVerification, setFilterVerification] = useState<'همه' | 'verified' | 'needs_verification'>('همه');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSupplierForModal, setSelectedSupplierForModal] = useState<SupplierRecord | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState<SupplierRecord | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<SupplierRecord | null>(null);
 
   // Dynamic Country extraction from supplier list
   const availableCountries = useMemo(() => {
@@ -110,7 +110,16 @@ export const SupplierEvaluation: React.FC<SupplierEvaluationProps> = ({
   }, [suppliers, filterCountry, filterCategory, filterVerification, searchQuery]);
 
   return (
+    <>
     <div id="supplier-evaluation-matrix" className="flex-1 flex flex-col min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden text-right">
+      {/* یادآوری صادقانه */}
+      <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-[11px] text-amber-900 flex-shrink-0">
+        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <span className="leading-relaxed">
+          تحلیل ریسک این بخش <strong>قاعده‌محور</strong> است و جایگزین ممیزی میدانی و
+          استعلام رسمی (CCPIT / اتاق بازرگانی / بانک) نیست. تأمین‌کنندگان را خودتان ثبت می‌کنید.
+        </span>
+      </div>
       {/* نوار ابزار فشرده — جستجو و شمارش (هویت جدید) */}
       <div className="bg-slate-50 border-b border-slate-200 p-4 flex flex-col md:flex-row md:items-center gap-3 flex-shrink-0">
         <div className="relative flex-1">
@@ -135,6 +144,13 @@ export const SupplierEvaluation: React.FC<SupplierEvaluationProps> = ({
           <div className="text-[10px] opacity-90">تأمین‌کنندگان منطبق</div>
           <div className="text-lg font-black font-mono">{filteredSuppliers.length.toLocaleString('fa-IR')} شرکت</div>
         </div>
+        <button
+          onClick={() => { setEditingSupplier(null); setFormOpen(true); }}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-4 py-2.5 text-xs font-bold shadow-sm flex items-center gap-1.5 transition-colors shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span>افزودن تأمین‌کننده</span>
+        </button>
       </div>
 
       {/* Multi-tier Filter Toolbar */}
@@ -187,7 +203,7 @@ export const SupplierEvaluation: React.FC<SupplierEvaluationProps> = ({
                     onClick={() => setFilterCountry(c)}
                     className={`text-xs px-3 py-1 rounded-lg font-medium whitespace-nowrap transition-all ${
                       isSelected
-                        ? 'bg-blue-600 text-white font-bold shadow-xs'
+                        ? 'bg-indigo-600 text-white font-bold shadow-xs'
                         : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
                     }`}
                   >
@@ -238,26 +254,46 @@ export const SupplierEvaluation: React.FC<SupplierEvaluationProps> = ({
         </div>
 
         {filteredSuppliers.length === 0 ? (
-          <div className="col-span-full bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-xl">
-              🏢
+          suppliers.length === 0 ? (
+            <div className="col-span-full bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                <Building2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800">هنوز تأمین‌کننده‌ای ثبت نشده است</h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                هیچ داده‌ی ساختگی وجود ندارد. اولین تأمین‌کننده خارجی خود را با مشخصات واقعی ثبت کنید
+                تا در ماتریس اعتبارسنجی تحلیل شود.
+              </p>
+              <button
+                onClick={() => { setEditingSupplier(null); setFormOpen(true); }}
+                className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                افزودن اولین تأمین‌کننده
+              </button>
             </div>
-            <h3 className="text-sm font-bold text-slate-800">هیچ تأمین‌کننده‌ای با فیلترهای انتخابی شما یافت نشد</h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
-              فیلتر کشور ({filterCountry}) یا دسته‌بندی ({filterCategory}) را به حالت پیش‌فرض بازگردانید تا تمام تأمین‌کنندگان فعال نمایش داده شوند.
-            </p>
-            <button
-              onClick={() => {
-                setFilterCountry('همه کشورها');
-                setFilterCategory('همه کالاها و دسته‌ها');
-                setFilterVerification('همه');
-                setSearchQuery('');
-              }}
-              className="mt-2 text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-4 py-2 rounded-xl border border-blue-200"
-            >
-              بازنشانی تمام فیلترها
-            </button>
-          </div>
+          ) : (
+            <div className="col-span-full bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-xl">
+                🏢
+              </div>
+              <h3 className="text-sm font-bold text-slate-800">هیچ تأمین‌کننده‌ای با فیلترهای انتخابی شما یافت نشد</h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                فیلتر کشور ({filterCountry}) یا دسته‌بندی ({filterCategory}) را به حالت پیش‌فرض بازگردانید.
+              </p>
+              <button
+                onClick={() => {
+                  setFilterCountry('همه کشورها');
+                  setFilterCategory('همه کالاها و دسته‌ها');
+                  setFilterVerification('همه');
+                  setSearchQuery('');
+                }}
+                className="mt-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-200"
+              >
+                بازنشانی تمام فیلترها
+              </button>
+            </div>
+          )
         ) : (
           filteredSuppliers.map((supplier) => {
             const vInfo = supplier.sourceVerification;
@@ -406,10 +442,26 @@ export const SupplierEvaluation: React.FC<SupplierEvaluationProps> = ({
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    <button
+                      onClick={() => { setEditingSupplier(supplier); setFormOpen(true); }}
+                      className="text-xs border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold px-3 py-2 rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                      title="ویرایش مشخصات"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      <span>ویرایش</span>
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(supplier)}
+                      className="text-xs border border-rose-200 text-rose-700 hover:bg-rose-50 font-bold px-3 py-2 rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                      title="حذف تأمین‌کننده"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>حذف</span>
+                    </button>
                     <button
                       onClick={() => onOpenRfqWithSupplier(supplier)}
-                      className="flex-1 sm:flex-none text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5"
+                      className="flex-1 sm:flex-none text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5"
                     >
                       <Send className="w-3.5 h-3.5" />
                       <span>صدور استعلام رسمی (RFQ)</span>
@@ -422,5 +474,50 @@ export const SupplierEvaluation: React.FC<SupplierEvaluationProps> = ({
         )}
       </div>
     </div>
+
+    {/* مودال افزودن / ویرایش تأمین‌کننده */}
+    <SupplierFormModal
+      isOpen={formOpen}
+      onClose={() => { setFormOpen(false); setEditingSupplier(null); }}
+      initial={editingSupplier}
+      onSave={upsertSupplier}
+    />
+
+    {/* تأیید حذف تأمین‌کننده */}
+    {confirmDelete && (
+      <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-2xl p-6 text-right space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-slate-900">حذف تأمین‌کننده</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                «{confirmDelete.name}» برای همیشه از ماتریس اعتبارسنجی حذف می‌شود. این عمل قابل بازگشت نیست.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-2.5 pt-2">
+            <button
+              onClick={() => setConfirmDelete(null)}
+              className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              انصراف
+            </button>
+            <button
+              onClick={async () => {
+                if (confirmDelete) await deleteSupplier(confirmDelete.id);
+                setConfirmDelete(null);
+              }}
+              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors"
+            >
+              بله، حذف شود
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };

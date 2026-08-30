@@ -1,0 +1,3 @@
+# فایل‌های batch ویندوز باید با CRLF ذخیره شوند وگرنه cmd.exe خطا می‌دهد
+*.bat text eol=crlf
+*.cmd text eol=crlf

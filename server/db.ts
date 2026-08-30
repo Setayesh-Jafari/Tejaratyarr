@@ -7,7 +7,6 @@
 import fs from 'fs';
 import path from 'path';
 import { InventoryUnit, SupplierRecord, TradeAssessmentDossier, AppSettings, CargoEvent } from '../src/types';
-import { INITIAL_INVENTORY, INITIAL_SUPPLIERS } from '../src/data/mockData';
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'appstore.json');
@@ -27,48 +26,15 @@ export const uid = (prefix: string) =>
 
 /* ------------------------------ Seed ------------------------------ */
 
-const daysAgo = (n: number): string => new Date(Date.now() - n * 86400000).toISOString();
-
+/**
+ * حالت اولیه‌ی سامانه: کاملاً خالی و صادق.
+ * هیچ پرونده، تأمین‌کننده یا ارزیابی ساختگی از پیش ساخته نمی‌شود؛
+ * کاربر (واردکننده) خودش اولین داده‌ی واقعی را ثبت می‌کند.
+ */
 function seed(): DbShape {
-  // برای هر واحد، تایم‌لاین معقول بر اساس وضعیت فعلی ساخته می‌شود
-  const stageIndex: Record<string, number> = {
-    'در انتظار تخصیص ارز و ثبت سفارش': 0,
-    'در حال ترانزیت بین‌المللی': 1,
-    'در گمرک (در حال ترخیص)': 2,
-    'موجود در انبار (ترخیص شده)': 3,
-    'رزرو مشتری / پیش‌فروش': 3,
-  };
-
-  const inventory: InventoryUnit[] = INITIAL_INVENTORY.map((u, i) => {
-    const idx = stageIndex[u.status] ?? 3;
-    const createdDays = 95 - i * 9; // پراکندگی زمانی بین ۲۰ تا ۹۵ روز قبل
-    const events: CargoEvent[] = [
-      { id: uid('EV'), at: daysAgo(createdDays), kind: 'created', title: 'ثبت اولیه پرونده در سامانه', detail: `ثبت سفارش ${u.orderRegCode} — تأمین ارز: ${u.fxType}`, by: 'کارشناس بازرگانی' },
-    ];
-    const stageDay = (s: string, d: number): CargoEvent => ({
-      id: uid('EV'),
-      at: daysAgo(d),
-      kind: 'status_change',
-      title: s,
-      by: 'کارتابل عملیات',
-    });
-    if (idx >= 1) events.push(stageDay('در حال ترانزیت بین‌المللی', createdDays - 18));
-    if (idx >= 2) events.push(stageDay('در گمرک (در حال ترخیص)', createdDays - 34));
-    if (idx >= 3) events.push(stageDay('موجود در انبار (ترخیص شده)', createdDays - 50));
-    if (u.status === 'رزرو مشتری / پیش‌فروش')
-      events.push({ id: uid('EV'), at: daysAgo(6), kind: 'note', title: 'رزرو مشتری / پیش‌فروش', detail: 'تخصیص بخشی از موجودی به سفارش مشتری', by: 'واحد فروش' });
-
-    return {
-      ...u,
-      events,
-      createdAt: daysAgo(createdDays),
-      stageEnteredAt: daysAgo(idx >= 3 ? createdDays - 50 : idx === 2 ? createdDays - 34 : idx === 1 ? createdDays - 18 : createdDays),
-    };
-  });
-
   return {
-    inventory,
-    suppliers: INITIAL_SUPPLIERS,
+    inventory: [],
+    suppliers: [],
     assessments: [],
     settings: {
       fx: { usdNimaToman: 68000, usdAzadToman: 92500, eurToman: 76500, updatedAt: new Date().toISOString() },
@@ -190,6 +156,14 @@ export const db = {
     else d.suppliers[i] = rec;
     flush();
     return rec;
+  },
+  deleteSupplier(id: string): boolean {
+    const d = load();
+    const before = d.suppliers.length;
+    d.suppliers = d.suppliers.filter((s) => s.id !== id);
+    if (d.suppliers.length === before) return false;
+    flush();
+    return true;
   },
 
   /* ---------- Assessments ---------- */

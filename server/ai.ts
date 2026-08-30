@@ -10,7 +10,9 @@ import { HS_CODE_DIRECTORY } from '../src/data/hscodeDirectory';
 import { matchScore } from '../src/lib/search';
 import type { AiHsSuggestion, AiSupplierReport } from '../src/types';
 
-const MODEL = process.env.GEMINI_MODEL || 'gemini-3.7-flash';
+// نام مدل از env قابل تغییر است؛ پیش‌فرض یک مدل پایدار و مستند Google است
+// (gemini-3.7-flash مدل معتبری نبود و به‌طور بی‌صدا fallback می‌شد).
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 let client: GoogleGenAI | null = null;
 function ai(): GoogleGenAI | null {
@@ -112,7 +114,10 @@ export async function hsSuggest(req: HsSuggestReq): Promise<{ engine: 'gemini' |
     return {
       engine: 'local',
       suggestions: candidates.slice(0, 5),
-      note: 'موتور محلی کتاب تعرفه (تطابق واژگانی). برای استعلام زنده هوش مصنوعی از تمام فصول کتاب تعرفه، کلید Gemini فعال است.'
+      note:
+        candidates.length > 0
+          ? 'موتور محلی کتاب تعرفه (تطابق واژگانی با ۲۷ ردیف منتخب دایرکتوری). برای استعلام زنده از سایر فصول، کلید Gemini را فعال کنید.'
+          : 'در دایرکتوری محلی (۲۷ ردیف منتخب) تطبیقی یافت نشد. لطفاً توضیحات فنی دقیق‌تری بدهید یا کلید Gemini را برای استعلام از سایر فصول فعال کنید.',
     };
   }
 
@@ -165,22 +170,23 @@ ${directoryContext}
 
     return { engine: 'gemini', suggestions, note: out.note };
   } catch (e: any) {
-    if (e?.message === 'AI_DISABLED') return { engine: 'local', suggestions: candidates.slice(0, 5) };
+    if (e?.message === 'AI_DISABLED') {
+      return {
+        engine: 'local',
+        suggestions: candidates.slice(0, 5),
+        note: candidates.length > 0
+          ? 'موتور محلی کتاب تعرفه (تطابق واژگانی با دایرکتوری).'
+          : 'در دایرکتوری محلی تطبیقی یافت نشد؛ توضیحات فنی دقیق‌تری بدهید.',
+      };
+    }
     console.error('[ai] hsSuggest fallback:', e?.message ?? e);
+    // صادقانه: هیچ‌گاه کد تعرفه‌ی ساختگی تولید نمی‌کنیم؛ بدون تطبیق، پاسخ خالی است.
     return {
       engine: 'local',
-      suggestions: candidates.length > 0 ? candidates.slice(0, 5) : [
-        {
-          code: '8479.89.00',
-          title: req.productName,
-          dutyTotalPct: 5,
-          samtGroup: 'گروه ۲۲',
-          confidence: 65,
-          reasoning: 'پیشنهاد تخمینی طبق فصل ۸۴ مقررات گمرکی.',
-          warnings: ['پیشنهاد بر پایه موتور محلی؛ جزئیات فنی کاتالوگ را بررسی کنید.']
-        }
-      ],
-      note: 'مدل آنلاین در دسترس نبود؛ نتیجه بر اساس موتور محلی ارائه شد.'
+      suggestions: candidates.slice(0, 5),
+      note: candidates.length > 0
+        ? 'مدل آنلاین در دسترس نبود؛ نتیجه بر اساس موتور محلی دایرکتوری ارائه شد.'
+        : 'مدل آنلاین در دسترس نبود و در دایرکتوری محلی نیز تطبیقی یافت نشد. لطفاً توضیحات فنی دقیق‌تری (جنس، کاربرد، مشخصات) بدهید.',
     };
   }
 }
@@ -208,53 +214,109 @@ const supplierSchema = {
   required: ['riskLevel', 'riskScore', 'summary', 'entityInsights', 'redFlags', 'recommendedChecks'],
 };
 
+const FREE_MAIL_DOMAINS = new Set([
+  'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com', 'aol.com', 'mail.com',
+  'qq.com', '163.com', '126.com', 'sina.com', 'protonmail.com', 'icloud.com', 'gmx.com', 'web.de',
+]);
+
+const COUNTRY_TLD: Record<string, string> = {
+  'چین': 'cn', 'امارات': 'ae', 'امارات متحده عربی': 'ae', 'ترکیه': 'tr', 'آلمان': 'de', 'ایتالیا': 'it',
+  'هند': 'in', 'کره جنوبی': 'kr', 'ژاپن': 'jp', 'تایوان': 'tw', 'ویتنام': 'vn', 'مالزی': 'my',
+  'تایلند': 'th', 'اسپانیا': 'es', 'فرانسه': 'fr', 'هلند': 'nl', 'بلژیک': 'be', 'انگلستان': 'uk',
+  'بریتانیا': 'uk', 'روسیه': 'ru', 'برزیل': 'br', 'لهستان': 'pl', 'اتریش': 'at',
+};
+
+/**
+ * تحلیل ریسک تأمین‌کننده — موتور محلی چک‌لیستی (جایگزین regexهای تک‌خطی قبلی)
+ * هر بررسی یک آیتم ساختاری در redFlags / entityInsights می‌سازد و به امتیاز ریسک وزن می‌دهد.
+ */
 export function localSupplierCheck(req: SupplierCheckReq): AiSupplierReport {
   const red: string[] = [];
   const insights: string[] = [];
-  let score = 18;
+  let score = 20; // پایه‌ی خنثی
 
-  const n = req.name.trim();
-  if (/trading|import|export|سازمان|بازرگانی|group|holding/i.test(n)) {
-    red.push('نام entity حاوی واژه‌های واسطه‌ای (Trading/Import/بازرگانی) است — احتمال بروکر به‌جای کارخانه.');
-    score += 22;
-  } else if (/co\.?,?\s*ltd|gmbh|inc\.?|s\.?a\.?|ag$/i.test(n)) {
-    insights.push('پسوند حقوقی رسمی در نام شرکت ثبت شده (Ltd/GmbH/AG) — نشانه مثبت شخصیت حقوقی شفاف.');
-    score -= 4;
-  }
-  if (req.domain) {
-    const tld = req.domain.split('.').pop()?.toLowerCase() ?? '';
-    const c = (req.country ?? '').trim();
-    const countryTld: Record<string, string> = { چین: 'cn', 'امارات': 'ae', 'امارات متحده عربی': 'ae', ترکیه: 'tr', آلمان: 'de', ایتالیا: 'it', هند: 'in', 'کره جنوبی': 'kr', ژاپن: 'jp' };
-    const expected = countryTld[c];
-    if (expected && tld !== expected && tld !== 'com') {
-      red.push(`دامنه .${tld} با کشور اعلامی (${c}) هم‌خوانی ندارد — دامنه ملی مورد انتظار .${expected} بود.`);
-      score += 14;
-    } else {
-      insights.push('دامنه وب با کشور اعلامی سازگار است.');
-    }
+  const name = (req.name ?? '').trim();
+  const domain = (req.domain ?? '').trim().toLowerCase();
+  const country = (req.country ?? '').trim();
+  const extra = (req.extra ?? '').trim();
+  const categories = (req.categories ?? '').trim();
+
+  // ۱) شخصیت حقوقی
+  const hasLegalSuffix = /(co\.?[\s,]?ltd|ltd\.?|llc|gmbh|inc\.?|s\.?a\.?|s\.?r\.?l|ag\b|b\.?v\.?|pty[\s.]?ltd|company|corporation|group|holding)/i.test(name);
+  if (hasLegalSuffix) {
+    insights.push('نام شرکت پسوند شخصیت حقوقی رسمی دارد (Ltd/GmbH/AG و…) — نشانه‌ی مثبت ثبت رسمی.');
+    score -= 5;
   } else {
-    red.push('دامنه/وب‌سایت معرفی نشده — بدون وب‌سایت صنعتی، احراز کارخانه بودن ممکن نیست.');
-    score += 12;
+    red.push('نام فاقد پسوند حقوقی رسمی است — احراز «کارخانه بودن» دشوارتر می‌شود.');
+    score += 8;
   }
-  if (n.split(/\s+/).length <= 2 && !/ltd|gmbh|co\b|inc/i.test(n)) {
-    red.push('نام کوتاه و ژنریک — احتمال شرکت صوری یا شخص حقیقی بالاست.');
+
+  // ۲) واژه‌های واسطه‌ای/بروکری
+  if (/trading|import|export|broker|intermediar|بازرگانی|واسطه/i.test(name)) {
+    red.push('نام entity حاوی واژه‌های واسطه‌ای (Trading/Import/بازرگانی) است — احتمال بروکر به‌جای کارخانه.');
+    score += 18;
+  }
+
+  // ۳) طول و ژنریک بودن نام
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length <= 2 && !hasLegalSuffix) {
+    red.push('نام بسیار کوتاه و ژنریک است — احتمال شرکت صوری یا شخص حقیقی بالاست.');
     score += 10;
   }
-  insights.push('درخواست حتماً گواهی CCPIT/اتاق بازرگانی و سابقه بارنامه (B/L) دو محموله اخیر را مطالبه کنید.');
+
+  // ۴) دامنه وب
+  if (!domain) {
+    red.push('وب‌سایت/دامنه معرفی نشده — بدون وب‌سایت صنعتی، ممیزی کارخانه ممکن نیست.');
+    score += 12;
+  } else {
+    const host = domain.replace(/^www\./, '');
+    const isFreeMail = FREE_MAIL_DOMAINS.has(host) || FREE_MAIL_DOMAINS.has(host.split('.').slice(-2).join('.'));
+    if (isFreeMail) {
+      red.push('دامنه ارائه‌شده یک سرویس ایمیل رایگان است — نشانه‌ی قوی عدم اصالت کارخانه.');
+      score += 22;
+    } else {
+      insights.push('دامنه‌ی اختصاصی شرکتی ثبت شده است.');
+      const tld = host.split('.').pop() ?? '';
+      const key = Object.keys(COUNTRY_TLD).find((k) => country.includes(k) || k.includes(country));
+      const expected = key ? COUNTRY_TLD[key] : undefined;
+      if (expected && tld !== expected && tld !== 'com') {
+        red.push(`دامنه .${tld} با کشور اعلامی (${country}) هم‌خوانی ندارد (مورد انتظار .${expected}).`);
+        score += 12;
+      } else if (expected) {
+        insights.push(`دامنه .${tld} با کشور اعلامی سازگار است.`);
+      }
+    }
+  }
+
+  // ۵) نشانه‌های فروش تهاجمی در توضیحات
+  if (extra && /(ارزان‌ترین|قیمت استثنایی|بدون پیش‌پرداخت|تخفیف|تحویل فوری)/.test(extra)) {
+    red.push('متن معرفی حاوی وعده‌های فروش تهاجمی (قیمت استثنایی/بدون پیش‌پرداخت) است.');
+    score += 6;
+  }
+
+  // ۶) مجوزهای تخصصی بر اساس دسته کالا
+  if (/پزشکی|دارو|دارویی|سونوگرافی|تجهیزات پزشکی/i.test(categories)) {
+    insights.push('دسته‌ی پزشکی: گواهی IMED/CE و تأییدیه سازمان غذا و دارو الزامی است.');
+  }
+  if (/غذایی|خوراکی|کشاورزی|قهوه|گندم/i.test(categories)) {
+    insights.push('دسته‌ی غذایی/کشاورزی: گواهی بهداشت و قرنطینه نباتی الزامی است.');
+  }
+
+  insights.push('درخواست گواهی CCPIT/اتاق بازرگانی و سابقه بارنامه (B/L) دو محموله اخیر الزامی است.');
 
   const clamped = Math.max(5, Math.min(95, Math.round(score)));
   const level = clamped < 35 ? 'کم' : clamped < 65 ? 'متوسط' : 'بالا';
   return {
     riskLevel: level,
     riskScore: clamped,
-    summary: `ارزیابی قاعده‌محور: پتانسیل ریسک ${level} (${clamped}/100). این نتیجه موتور محلی است؛ برای تحلیل هوش مصنوعی کلید Gemini را تنظیم کنید.`,
+    summary: `ارزیابی چک‌لیستی محلی: ریسک ${level} (${clamped}/100) بر اساس ${red.length} پرچم قرمز و ${insights.length} نکته‌ی ساختاری. این نتیجه قاعده‌محور است و جایگزین استعلام رسمی نیست.`,
     entityInsights: insights,
     redFlags: red.length ? red : ['هیچ پرچم قرمز ساختاری آشکاری در داده‌های ورودی یافت نشد.'],
     recommendedChecks: [
       'استعلام شناسه ثبت ملی (USCC چین / Trade Register اروپا) و تطبیق نام سهام‌دار',
       'درخواست Audit Report مالی سال قبل و گواهی بانکی سلامت حساب',
       'مطالبه گواهی CCPIT و کنسولی بر پروفرما و بارنامه',
-      'پرداخت اولیه حتماً از طریق L/C اشتعاعی یا escrow منطقه آزاد',
+      'پرداخت اولیه حتماً از طریق L/C اشتعالی یا escrow منطقه آزاد',
     ],
   };
 }

@@ -7,6 +7,7 @@ import {
   AlertTriangle, 
   ShieldCheck, 
   HelpCircle, 
+  Info,
   Copy, 
   Send, 
   FileCheck2, 
@@ -163,6 +164,14 @@ export const TradeIntelligenceSearch: React.FC<TradeIntelligenceSearchProps> = (
 
   return (
     <div id="trade-intelligence-explorer" className="flex-1 flex flex-col min-h-0 overflow-hidden space-y-4 text-right">
+      {/* یادآوری صادقانه: اسناد این بخش نمونه/مرجع هستند، نه استعلام زنده */}
+      <div className="flex items-start gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2 text-[11px] text-indigo-900 flex-shrink-0">
+        <Info className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+        <span className="leading-relaxed">
+          اسناد این کاوشگر <strong>نمونه/مرجع</strong> هستند و به‌صورت زنده از موتورهای استنادی استعلام نمی‌شوند؛
+          پیش از هر تصمیم تجاری، نتایج را با منبع رسمی تطبیق دهید.
+        </span>
+      </div>
       {/* نوار جستجوی فشرده — هویت جدید */}
       <div className="tj-card p-4 flex-shrink-0 space-y-3">
         <div className="flex flex-col md:flex-row md:items-center gap-3">
@@ -227,13 +236,13 @@ export const TradeIntelligenceSearch: React.FC<TradeIntelligenceSearchProps> = (
                 onClick={() => setSelectedEngine(eng.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                   isSelected
-                    ? 'bg-blue-600 text-white shadow-xs'
+                    ? 'bg-indigo-600 text-white shadow-xs'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                 }`}
               >
                 <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
                 <span>{eng.label}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${isSelected ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${isSelected ? 'bg-indigo-700 text-white' : 'bg-slate-200 text-slate-600'}`}>
                   {eng.count}
                 </span>
               </button>
@@ -252,7 +261,7 @@ export const TradeIntelligenceSearch: React.FC<TradeIntelligenceSearchProps> = (
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1 text-xs text-slate-800 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1 text-xs text-slate-800 font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
             >
               <option value="all">همه دسته‌بندی‌ها</option>
               {categories.filter(c => c !== 'all').map(c => (
@@ -270,7 +279,7 @@ export const TradeIntelligenceSearch: React.FC<TradeIntelligenceSearchProps> = (
             <select
               value={selectedVerification}
               onChange={(e) => setSelectedVerification(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1 text-xs text-slate-800 font-bold focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1 text-xs text-slate-800 font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500"
             >
               <option value="all">همه اسناد و گزارش‌ها</option>
               <option value="verified">فقط تأییدشده رسمی (Verified)</option>
@@ -470,7 +479,7 @@ export const TradeIntelligenceSearch: React.FC<TradeIntelligenceSearchProps> = (
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => onOpenRfq(record.title, record.originCountry)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
                     >
                       <Send className="w-3.5 h-3.5" />
                       <span>ارسال استعلام براساس این سند (RFQ)</span>

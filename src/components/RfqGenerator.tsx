@@ -19,13 +19,21 @@ export const RfqGenerator: React.FC<RfqGeneratorProps> = ({ suppliers, activeSup
 
   const selectedSupplier = suppliers.find((s) => s.id === selectedSupplierId) || suppliers[0];
 
+  // پنجره‌ی تحویل پیشنهادی — محاسبه‌ی پویا بر اساس فصل جاری
+  const nextQuarter = (() => {
+    const now = new Date();
+    const q = Math.floor(now.getMonth() / 3) + 1;
+    const y = now.getFullYear();
+    return q === 4 ? `Q1/${y + 1}` : `Q${q + 1}/${y}`;
+  })();
+
   const generatedEmail = `To: ${selectedSupplier?.email || 'sales@supplier.com'}
 Attn: ${selectedSupplier?.contactPerson || 'International Export Dept.'} (${selectedSupplier?.name})
 Subject: Formal RFQ [Procurement ID: IR-RFQ-${Date.now().toString().slice(-6)}] - ${productTitle}
 
 Dear ${selectedSupplier?.contactPerson || 'International Export Team'},
 
-On behalf of Iranian Commercial & Import Directorate, we are issuing this formal Request for Quotation (RFQ) for the following commercial batch:
+On behalf of our import & sourcing operations, we are issuing this formal Request for Quotation (RFQ) for the following commercial batch:
 
 1. PRODUCT SPECIFICATIONS & TECHNICAL REQUIREMENTS:
    - Item Description: ${productTitle}
@@ -37,7 +45,7 @@ On behalf of Iranian Commercial & Import Directorate, we are issuing this formal
    - Target Order Volume: ${quantity}
    - Delivery Incoterms: ${incoterms}
    - Packing: Standard Export Sea-Worthy Palletized Crates with Moisture Protection
-   - Target Dispatch Window: Q3/Q4 2024
+   - Target Dispatch Window: ${nextQuarter}
    - Accepted Payment Terms: Irrevocable Documentary L/C or Direct Telegraphic Transfer (TT) via verified exchange channels (UAE / Oman / China)
 
 3. REQUIRED SUBMISSIONS IN YOUR PROFORMA:
@@ -50,9 +58,9 @@ On behalf of Iranian Commercial & Import Directorate, we are issuing this formal
 Thank you for your prompt cooperation.
 
 Best regards,
-Commercial & Sourcing Operations
-TejaratYar Global Trade Platform
-Email: procurement@tejaratyar-trade.ir`;
+Import & Sourcing Operations
+TejaratYar — Trade Workspace
+Email: sourcing@your-company.com`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedEmail);
@@ -95,7 +103,7 @@ Email: procurement@tejaratyar-trade.ir`;
           </button>
           <button
             onClick={handleDownload}
-            className="flex items-center gap-1.5 text-xs px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-xs transition-colors"
+            className="flex items-center gap-1.5 text-xs px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-xs transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             <span>دانلود فایل متنی</span>
@@ -112,7 +120,7 @@ Email: procurement@tejaratyar-trade.ir`;
             <select
               value={selectedSupplierId}
               onChange={(e) => setSelectedSupplierId(e.target.value)}
-              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-semibold"
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold"
             >
               {suppliers.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -128,7 +136,7 @@ Email: procurement@tejaratyar-trade.ir`;
               type="text"
               value={productTitle}
               onChange={(e) => setProductTitle(e.target.value)}
-              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-left"
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-left"
               dir="ltr"
             />
           </div>
@@ -139,7 +147,7 @@ Email: procurement@tejaratyar-trade.ir`;
               rows={3}
               value={targetTargetSpecs}
               onChange={(e) => setTargetSpecs(e.target.value)}
-              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-left leading-relaxed"
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-left leading-relaxed"
               dir="ltr"
             />
           </div>
@@ -150,7 +158,7 @@ Email: procurement@tejaratyar-trade.ir`;
               type="text"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-left"
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-left"
               dir="ltr"
             />
           </div>
@@ -161,7 +169,7 @@ Email: procurement@tejaratyar-trade.ir`;
               type="text"
               value={incoterms}
               onChange={(e) => setIncoterms(e.target.value)}
-              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-left"
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-left"
               dir="ltr"
             />
           </div>

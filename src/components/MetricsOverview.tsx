@@ -1,5 +1,5 @@
 import React from 'react';
-import { InventoryUnit } from '../types';
+import { InventoryUnit, isSettledStatus } from '../types';
 import { Warehouse, Ship, Hourglass, Coins } from 'lucide-react';
 import { StatCard } from './ui/Chrome';
 import { fmtBillion } from '../lib/format';
@@ -10,7 +10,7 @@ interface MetricsOverviewProps {
 
 export const MetricsOverview: React.FC<MetricsOverviewProps> = ({ inventory }) => {
   const totalClearedUnits = inventory
-    .filter((i) => i.status === 'موجود در انبار (ترخیص شده)' || i.status === 'رزرو مشتری / پیش‌فروش')
+    .filter((i) => isSettledStatus(i.status))
     .reduce((acc, item) => acc + item.stockQty, 0);
 
   const totalInTransitOrCustoms = inventory
@@ -21,9 +21,8 @@ export const MetricsOverview: React.FC<MetricsOverviewProps> = ({ inventory }) =
     (i) => i.status === 'در انتظار تخصیص ارز و ثبت سفارش' || i.complianceGate === 'در حال بازرسی استاندارد (COI)'
   ).length;
 
-  const totalInventoryValueToman = inventory.reduce((acc, item) => {
-    return acc + item.landedCostToman * (item.unit.includes('تن') || item.unit.includes('کیسه') ? Math.min(item.stockQty, 10) : item.stockQty);
-  }, 0);
+  // ارزش بهای تمام‌شده سبد (میلیون تومان) — بدون هیچ ضریب سلیقه‌ای
+  const totalInventoryValueToman = inventory.reduce((acc, item) => acc + item.landedCostToman * item.stockQty, 0);
 
   return (
     <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-shrink-0">

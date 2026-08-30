@@ -6,14 +6,13 @@
  */
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
 import { db, uid } from './server/db';
 import { hsSuggest, supplierCheck, isAiEnabled, modelName } from './server/ai';
 import type { InventoryUnit, SupplierRecord, TradeAssessmentDossier, AppSettings } from './src/types';
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json({ limit: '2mb' }));
 
@@ -115,6 +114,11 @@ async function startServer() {
     res.json(db.upsertSupplier({ ...existing, ...(req.body as Partial<SupplierRecord>), id: existing.id }));
   }));
 
+  app.delete('/api/suppliers/:id', wrap((req, res) => {
+    if (!db.deleteSupplier(req.params.id)) return bad(res, 404, 'تأمین‌کننده یافت نشد.');
+    res.json({ ok: true });
+  }));
+
   /* --------------------------- Assessments -------------------------- */
 
   app.get('/api/assessments', wrap((_req, res) => res.json(db.getAssessments())));
@@ -157,6 +161,8 @@ async function startServer() {
   /* ---------------------- Frontend / Vite Serving ------------------- */
 
   if (process.env.NODE_ENV !== 'production') {
+    // vite فقط در حالت توسعه نیاز است؛ ایمپورت داینامیک تا باندل تولید خودکفا بماند
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

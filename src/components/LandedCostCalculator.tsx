@@ -12,7 +12,12 @@ interface LandedCostCalculatorProps {
   initial?: Partial<CostingInput>;
   sellPricePerUnitToman?: number;
   onSellPriceChange?: (v: number) => void;
-  onResult?: (result: ReturnType<typeof computeLandedCost>, qty: number) => void;
+  /** نتیجه و تحلیل حاشیه سود زنده — برای همگام‌سازی با والد (مثل حکم نهایی ویزارد) */
+  onResult?: (
+    result: ReturnType<typeof computeLandedCost>,
+    margin: ReturnType<typeof analyzeMargin>,
+    qty: number
+  ) => void;
   compact?: boolean;
 }
 
@@ -31,8 +36,8 @@ const NumField: React.FC<{
         onChange={(e) => onChange(Number(e.target.value))}
         className={`w-full rounded-lg border px-2.5 py-1.5 text-xs font-mono font-bold text-left focus:outline-none focus:ring-2 transition-all ${
           dark
-            ? 'bg-slate-800 border-slate-700 text-white focus:ring-blue-500'
-            : 'bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500 focus:bg-white'
+            ? 'bg-slate-800 border-slate-700 text-white focus:ring-indigo-500'
+            : 'bg-slate-50 border-slate-200 text-slate-900 focus:ring-indigo-500 focus:bg-white'
         }`}
       />
       {suffix && <span className={`absolute left-2 top-1.5 text-[10px] font-normal ${dark ? 'text-slate-500' : 'text-slate-400'}`}>{suffix}</span>}
@@ -71,9 +76,9 @@ export const LandedCostCalculator: React.FC<LandedCostCalculatorProps> = ({
   const sensitivity = useMemo(() => fxSensitivity(input, input.fxRateToman), [input]);
 
   React.useEffect(() => {
-    onResult?.(result, input.qty);
+    onResult?.(result, margin, input.qty);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result]);
+  }, [result, margin]);
 
   return (
     <div className="space-y-4">

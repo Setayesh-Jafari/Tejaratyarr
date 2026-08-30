@@ -84,10 +84,10 @@ export interface CompetingHsCode {
   allowedFxTypes: string[]; // انواع ارز مجاز (نیما، اشخاص و...)
   mandatoryPermits: string[]; // سازمان ملی استاندارد، غذا و دارو، ساتبا، تنظیم مقررات، انرژی اتمی و...
   technicalDiscriminator: string; // تفاوت فنی و فیزیکی که این کد را متمایز می‌کند
-  legalRiskNotes: string; // ریسک بیش‌بود/کم‌بود، جریمه ماده ۲۷ یا تبصره بند ش ق.ا.گ
+  riskNotes: string; // ریسک بیش‌بود/کم‌بود، جریمه ماده ۲۷ یا تبصره بند ش ق.ا.گ
   isRecommended?: boolean;
   recommendationReason?: string;
-  tscValueRef?: string; // سابقه ارزش در سامانه TSC
+  tscIdSample: string; // نمونه شناسه سابقه ارزش در سامانه TSC
 }
 
 export interface HsDisputeScenario {
@@ -115,6 +115,11 @@ export interface DataProvenanceSource {
   reliabilityScore: number;
 }
 
+/**
+ * قرارداد واحد پول در کل سامانه:
+ * `landedCostToman` و `marketPriceToman` بر حسب «میلیون تومان» ذخیره می‌شوند
+ * (مثلاً 5.1 یعنی ۵.۱ میلیون تومان). برای قالب‌بندی از توابع lib/format استفاده شود.
+ */
 export interface InventoryUnit {
   id: string;
   sku: string;
@@ -127,8 +132,10 @@ export interface InventoryUnit {
   status: ItemStatus;
   stockQty: number;
   unit: string;
-  costPriceUsd: number; // قیمت خرید ارزی
+  costPriceUsd: number; // قیمت خرید ارزی (CIF هر واحد به دلار)
   landedCostToman: number; // بهای تمام‌شده نهایی پس از ترخیص و حقوق گمرکی (میلیون تومان)
+  /** نرخ ارزی که بهای تمام‌شده با آن محاسبه شده (تومان/دلار) — برای بازمحاسبه‌ی «چه‌اگر» در داشبورد */
+  fxRateAtLandedToman?: number;
   marketPriceToman: number; // ارزش روز فروش بازار ایران (میلیون تومان)
   hsCode: string; // کد تعرفه گمرکی ۸ رقمی
   samtGroup: string; // گروه کالایی سامانه جامع تجارت (۲۱ تا ۲۶)
@@ -202,7 +209,7 @@ export interface StageLog {
   status: 'ok' | 'info' | 'warn' | 'active';
 }
 
-export type ActiveView = 'inventory' | 'intelligence' | 'hscode_resolver' | 'sourcing' | 'assessment' | 'rfq' | 'provenance' | 'analytics' | 'pipeline';
+export type ActiveView = 'overview' | 'inventory' | 'intelligence' | 'hscode_resolver' | 'sourcing' | 'assessment' | 'rfq' | 'provenance' | 'analytics' | 'pipeline';
 
 /* ---------- توسعه ۱۴۰۵: گردش کار، بهای تمام‌شده، هوش مصنوعی ---------- */
 
@@ -222,6 +229,27 @@ export const STATUS_FLOW: ItemStatus[] = [
   'در حال ترانزیت بین‌المللی',
   'در گمرک (در حال ترخیص)',
   'موجود در انبار (ترخیص شده)',
+];
+
+/** همه‌ی وضعیت‌های ممکن — منبع یگانه برای فرم‌ها (شامل حالت جانبی رزرو مشتری) */
+export const ALL_STATUSES: ItemStatus[] = [
+  ...STATUS_FLOW,
+  'رزرو مشتری / پیش‌فروش',
+];
+
+/** آیا وضعیت «تسویه‌شده» است (انبار یا رزرو مشتری)؟ */
+export const isSettledStatus = (s: ItemStatus): boolean =>
+  s === 'موجود در انبار (ترخیص شده)' || s === 'رزرو مشتری / پیش‌فروش';
+
+/** همه‌ی دسته‌بندی‌های کالایی — منبع یگانه برای فرم‌ها */
+export const PRODUCT_CATEGORIES: ProductCategory[] = [
+  'خودرو و ماشین‌آلات صنعتی',
+  'تجهیزات خورشیدی و برق',
+  'فولاد و مواد اولیه صنعتی',
+  'تجهیزات پزشکی و آزمایشگاهی',
+  'کالاهای اساسی و کشاورزی',
+  'منسوجات و پوشاک',
+  'قطعات الکترونیک و IT',
 ];
 
 /** ورودی موتور بهای تمام‌شده — معادل فرمول‌های ترخیص گمرک ایران */
@@ -257,6 +285,7 @@ export interface LandedCostResult {
   landedPerUnitToman: number;
   landedPerUnitMillionToman: number;
   customsOutlayToman: number; // مجموع پرداخت به گمرک (حقوق ورودی + سود بازرگانی + مالیات)
+  fxRateToman: number; // نرخ ارز به‌کاررفته در این محاسبه (برای ثبت به‌عنوان مرجع «چه‌اگر»)
 }
 
 export interface MarginAnalysis {

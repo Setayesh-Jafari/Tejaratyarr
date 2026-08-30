@@ -6,6 +6,7 @@ import {
 } from '../types';
 import { HS_DISPUTE_SCENARIOS } from '../data/hscodeScenarios';
 import { HS_CODE_DIRECTORY, CATEGORIES_WITH_COUNTS, HsCodeDatabaseEntry } from '../data/hscodeDirectory';
+import { enrichScenarioCodes } from '../lib/hsResolution';
 import { matchesQuery } from '../lib/search';
 import { api } from '../lib/api';
 import { AiHsSuggestCard } from './AiAssist';
@@ -41,6 +42,8 @@ import {
 
 interface HsCodeResolverProps {
   onSelectFinalCode?: (code: string, desc: string, duty: number) => void;
+  /** شروع ویزارد ارزیابی با سناریوی اختلافی انتخاب‌شده */
+  onSelectForAssessment?: (scenario: HsDisputeScenario) => void;
 }
 
 // کد تعرفه پیشنهادی سناریو: کدی از میان کدهای رقیب که پرچم isRecommended دارد
@@ -48,7 +51,7 @@ const getRecommendedCode = (scenario: HsDisputeScenario): string => {
   return scenario.competingCodes.find((c) => c.isRecommended)?.code ?? scenario.competingCodes[0].code;
 };
 
-export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCode }) => {
+export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCode, onSelectForAssessment }) => {
   // Navigation mode: 'interactive_scenarios' (dispute scenarios) vs 'comprehensive_directory' (searchable tariff book)
   const [viewMode, setViewMode] = useState<'interactive_scenarios' | 'comprehensive_directory'>('interactive_scenarios');
 
@@ -76,19 +79,39 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
     return [...customEntries, ...HS_CODE_DIRECTORY];
   }, [customEntries]);
 
+  // ماندگاری نتایج استعلام AI در localStorage — با refresh گم نمی‌شود
+  const LS_CUSTOM_KEY = 'tejaratyarr.hs-custom-entries.v1';
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LS_CUSTOM_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setCustomEntries(parsed);
+      }
+    } catch { /* داده‌ی ذخیره‌شده خراب است → نادیده گرفته می‌شود */ }
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_CUSTOM_KEY, JSON.stringify(customEntries));
+    } catch { /* حافظه‌ی مرورگر پر است → نادیده گرفته می‌شود */ }
+  }, [customEntries]);
+
   // Current Scenario
   const currentScenario = useMemo(() => {
     return HS_DISPUTE_SCENARIOS.find((s) => s.id === selectedScenarioId) || HS_DISPUTE_SCENARIOS[0];
   }, [selectedScenarioId]);
 
+  // کدهای رقیب سناریو — غنی‌شده از دایرکتوری رسمی (منبع واحد نرخ تعرفه)
+  const competingCodes = useMemo(() => enrichScenarioCodes(currentScenario.competingCodes), [currentScenario]);
+
   // Current Selected Code Candidate within scenario
   const selectedCodeObj = useMemo(() => {
     return (
-      currentScenario.competingCodes.find((c) => c.code === selectedCandidateCode) ||
-      currentScenario.competingCodes.find((c) => c.code === getRecommendedCode(currentScenario)) ||
-      currentScenario.competingCodes[0]
+      competingCodes.find((c) => c.code === selectedCandidateCode) ||
+      competingCodes.find((c) => c.code === getRecommendedCode(currentScenario)) ||
+      competingCodes[0]
     );
-  }, [currentScenario, selectedCandidateCode]);
+  }, [competingCodes, selectedCandidateCode, currentScenario]);
 
   // Directory Search Filtering — تطبیق واژه‌محور
   const filteredDirectory = useMemo(() => {
@@ -132,7 +155,7 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
     }
   }, [filteredDirectory]);
 
-  // استعلام زنده هوش مصنوعی برای هر کالای دلخواه در تمام ۹۸ فصل کتاب تعرفه
+  // استعلام هوشمند برای هر کالای دلخواه: دایرکتوری محلی + Gemini (در صورت فعال بودن کلید)
   const handleAiInquiry = async (queryText?: string) => {
     const query = (queryText ?? directorySearch).trim();
     if (!query) return;
@@ -164,11 +187,11 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
           mandatoryPermits: s.mandatoryPermits || ['سازمان ملی استاندارد'],
           specifications: s.specifications || s.reasoning,
           tscReference: s.tscReference || `شناسه TSC: ${s.code.replace(/\./g, '')}00000001`,
-          sourceRef: `استعلام رسمی هوشمند (${res.engine === 'gemini' ? 'هوش مصنوعی Gemini' : 'موتور تعرفه'})`,
+          sourceRef: `استعلام هوشمند (${res.engine === 'gemini' ? 'هوش مصنوعی Gemini' : 'موتور محلی تعرفه'})`,
           sampleProducts: [query, s.title],
           isPriority: true,
           notes: s.reasoning,
-          lastReviewed: '۱۴۰۴ (استعلام زنده)'
+          lastReviewed: '۱۴۰۴ (استعلام هوشمند)'
         }));
 
         setCustomEntries((prev) => {
@@ -184,7 +207,11 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
           }
         }
 
-        setAiSearchMessage(`کد تعرفه ۸ رقمی و مشخصات فنی کالای «${query}» با موفقیت از کتاب مقررات صادرات و واردات استخراج شد.`);
+        setAiSearchMessage(
+          res.engine === 'gemini'
+            ? `کد تعرفه ۸ رقمی و مشخصات فنی کالای «${query}» توسط هوش مصنوعی Gemini استخراج شد.`
+            : `کد تعرفه از دایرکتوری محلی (تطابق واژگانی) برای «${query}» یافت شد — پیش از ثبت سفارش با کتاب مقررات جاری تطبیق دهید.`
+        );
       } else {
         setAiSearchError('کالایی با این مشخصات یافت نشد. لطفاً نام تجاری یا مشخصات دقیق‌تری وارد کنید.');
       }
@@ -210,7 +237,7 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
 
   const handleSelectCode = (code: string) => {
     setSelectedCandidateCode(code);
-    const item = currentScenario.competingCodes.find(c => c.code === code);
+    const item = competingCodes.find(c => c.code === code);
     if (item && onSelectFinalCode) {
       onSelectFinalCode(item.code, item.titleFa, item.totalTariffPercent);
     }
@@ -247,11 +274,11 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
             }`}
           >
             <FolderTree className="w-3.5 h-3.5 text-teal-600" />
-            <span>جستجوی آزاد و استعلام کل کتاب تعرفه</span>
+            <span>جستجوی آزاد در دایرکتوری و استعلام هوشمند</span>
           </button>
         </div>
         <span className="text-[10px] text-slate-400 font-medium px-2">
-          پشتیبانی از کلیه ۹۸ فصل کتاب مقررات صادرات و واردات و تعرفه‌های جهانی WCO
+          پوشش محلی: {HS_CODE_DIRECTORY.length.toLocaleString('fa-IR')} ردیف منتخب پرکاربرد — سایر کالاها از طریق استعلام Gemini (در صورت فعال بودن کلید)
         </span>
       </div>
 
@@ -332,7 +359,7 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
                 <div className="flex items-center gap-2 text-xs text-indigo-950">
                   <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
                   <span>
-                    می‌خواهید برای <strong>«{directorySearch}»</strong> استعلام زنده ۸ رقمی با مأخذ سود بازرگانی و مجوزهای قانونی دریافت کنید؟
+                    می‌خواهید برای <strong>«{directorySearch}»</strong> استعلام ۸ رقمی با مأخذ سود بازرگانی و مجوزهای قانونی دریافت کنید؟
                   </span>
                 </div>
                 <button
@@ -357,6 +384,21 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
               <div className="bg-rose-50 border border-rose-200 rounded-xl p-2.5 text-xs text-rose-700 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                 <span>{aiSearchError}</span>
+              </div>
+            )}
+
+            {/* نشانگر نتایج استعلام ذخیره‌شده + پاک‌سازی */}
+            {customEntries.length > 0 && (
+              <div className="flex items-center justify-between flex-wrap gap-2 text-[10px] text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+                <span>
+                  <strong className="text-slate-700">{customEntries.length.toLocaleString('fa-IR')}</strong> نتیجه‌ی استعلام هوشمند ذخیره شده (در مرورگر شما ماندگار است).
+                </span>
+                <button
+                  onClick={() => setCustomEntries([])}
+                  className="text-rose-600 hover:text-rose-800 font-bold shrink-0 cursor-pointer"
+                >
+                  پاک کردن نتایج استعلام
+                </button>
               </div>
             )}
 
@@ -409,7 +451,7 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
                       کالای «{directorySearch}» در بانک مقدماتی یافت نشد
                     </h3>
                     <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                      سامانه قابلیت استعلام و بررسی <strong>تمامی کالاهای بازرگانی جهان</strong> در کل ۹۸ فصل کتاب مقررات صادرات و واردات را دارد.
+                      دایرکتوری داخلی {HS_CODE_DIRECTORY.length.toLocaleString('fa-IR')} ردیف منتخبِ پرکاربرد را پوشش می‌دهد. برای سایر کالاها می‌توانید از استعلام هوشمند (Gemini) استفاده کنید؛ بدون تطبیق معتبر، کد تعرفه‌ی حدسی ارائه نمی‌شود.
                     </p>
                   </div>
                   
@@ -650,9 +692,21 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
                 <Layers className="w-4 h-4 text-indigo-600" />
                 <span>پرونده‌های پرتکرار اختلاف تعرفه و تعارض در گمرکات ایران (انتخاب پرونده):</span>
               </span>
-              <span className="text-xs text-slate-500 font-medium">
-                {HS_DISPUTE_SCENARIOS.length} پرونده داغ
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs text-slate-500 font-medium">
+                  {HS_DISPUTE_SCENARIOS.length} پرونده داغ
+                </span>
+                {onSelectForAssessment && (
+                  <button
+                    onClick={() => onSelectForAssessment(currentScenario)}
+                    className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    title="شروع ویزارد ارزیابی برای کالای این پرونده"
+                  >
+                    <FileCheck2 className="w-3.5 h-3.5" />
+                    <span>شروع ارزیابی این کالا</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
@@ -779,7 +833,7 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
           {activeTab === 'comparison' && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {currentScenario.competingCodes.map((codeItem) => {
+                {competingCodes.map((codeItem) => {
                   const isSelected = selectedCodeObj.code === codeItem.code;
                   const isRec = codeItem.isRecommended;
 
@@ -943,7 +997,7 @@ export const HsCodeResolver: React.FC<HsCodeResolverProps> = ({ onSelectFinalCod
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {currentScenario.competingCodes.map((code) => (
+                {competingCodes.map((code) => (
                   <div
                     key={code.code}
                     className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3 flex flex-col justify-between"

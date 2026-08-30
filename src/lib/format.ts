@@ -1,5 +1,11 @@
 /**
  * قالب‌بندی اعداد فارسی — واحد پول و درصد
+ * ------------------------------------------------------------------
+ * قرارداد واحد پول:
+ *  - `fmtMillion(n)`  → n از قبل «میلیون تومان» است؛ همان عدد را قالب‌بندی می‌کند.
+ *  - `fmtBillion(n)`  → n به «میلیون» است و به «میلیارد» تبدیل و قالب‌بندی می‌شود.
+ *  - `fmtToman(n)`    → n به «تومان خام» است.
+ *  - `fmtTomanSmart(m)` → m به «میلیون» است و به‌صورت خوانا (میلیارد/میلیون) برمی‌گرداند.
  */
 const faNum = (n: number, digits = 0): string =>
   n.toLocaleString('fa-IR', { minimumFractionDigits: 0, maximumFractionDigits: digits });
@@ -10,10 +16,16 @@ export const fmtToman = (n: number): string => faNum(Math.round(n));
 /** میلیون تومان — حداکثر ۲ رقم اعشار */
 export const fmtMillion = (n: number): string => faNum(n, 2);
 
-/** میلیارد تومان — برای اعداد بزرگ سبد */
+/** میلیارد تومان — برای اعداد بزرگ سبد (ورودی بر حسب میلیون) */
 export const fmtBillion = (n: number): string => {
   const b = n / 1000; // میلیون → میلیارد
   return faNum(b, b >= 100 ? 0 : 2);
+};
+
+/** مقدار میلیون‌تومانی را به‌صورت خوانا قالب‌بندی می‌کند (میلیارد اگر ≥ ۱۰۰۰ میلیون). */
+export const fmtTomanSmart = (million: number): string => {
+  if (Math.abs(million) >= 1000) return `${faNum(million / 1000, 2)} میلیارد ت`;
+  return `${faNum(million, 1)} میلیون ت`;
 };
 
 export const fmtPct = (n: number): string => `${faNum(n, 1)}٪`;

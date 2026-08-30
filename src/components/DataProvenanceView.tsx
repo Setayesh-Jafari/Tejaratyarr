@@ -29,18 +29,18 @@ export const DataProvenanceView: React.FC = () => {
       {/* خلاصه وضعیت استنادی */}
       <div className="tj-card p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <p className="text-xs text-slate-600 leading-relaxed max-w-3xl flex-1">
-          داده‌های این سامانه از ترکیب مراجع حاکمیتی (گمرک ایران، سامانه جامع تجارت، TSC) و
-          پایگاه‌های بین‌المللی (ITC Trade Map، ImportYeti، Panjiva) استخراج شده‌اند؛
-          هر عدد در سامانه به منبع خود متصل است.
+          این صفحه شناسنامه‌ی مراجع و متدولوژی محاسبات سامانه است. اعداد مرجع (نرخ تعرفه، گروه کالایی
+          و فرمول بهای تمام‌شده) بر پایه‌ی اسناد رسمی و بانک‌های اطلاعاتی آفلاین اقتباس شده‌اند؛
+          توجه داشته باشید که داده‌های کارتابل و هوش تجاری فعلاً نمونه (دمو) هستند و اتصال زنده به سامانه‌های دولتی وجود ندارد.
         </p>
         <div className="flex items-center gap-2 shrink-0">
           <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-center">
-            <div className="text-[10px] text-slate-400 font-bold">پایگاه‌های مرجع</div>
+            <div className="text-[10px] text-slate-400 font-bold">مراجع مستند</div>
             <div className="text-base font-black font-mono text-indigo-700">{DATA_PROVENANCE_SOURCES.length.toLocaleString('fa-IR')} سازمان</div>
           </div>
           <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-center">
-            <div className="text-[10px] text-slate-400 font-bold">سطح مستندسازی</div>
-            <div className="text-base font-black font-mono text-emerald-700">۱۰۰٪</div>
+            <div className="text-[10px] text-slate-400 font-bold">میانگین ضریب اطمینان</div>
+            <div className="text-base font-black font-mono text-emerald-700">{Math.round(DATA_PROVENANCE_SOURCES.reduce((s, x) => s + x.reliabilityScore, 0) / DATA_PROVENANCE_SOURCES.length)}٪</div>
           </div>
         </div>
       </div>
@@ -92,44 +92,45 @@ export const DataProvenanceView: React.FC = () => {
         </div>
       </div>
 
-      {/* Answer Spotlight Box */}
-      <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-xl p-6 border border-indigo-700 shadow-md">
-        <div className="flex items-start gap-4">
-          <div className="p-3 bg-indigo-500/20 border border-indigo-400/30 rounded-xl text-indigo-300 shrink-0">
-            <Sparkles className="w-6 h-6" />
+      {/* مبنای مرجع هر بخش */}
+      <div className="tj-card p-5">
+        <div className="flex items-start gap-3.5">
+          <div className="p-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 shrink-0">
+            <Sparkles className="w-5 h-5" />
           </div>
-          <div className="space-y-3">
-            <h2 className="text-base font-bold text-indigo-200">
-              پاسخ صریح: داده‌های مدیریت کارگو، موجودی انبارها و روند حجم واردات دقیقاً از کجا استخراج شده‌اند؟
+          <div className="space-y-3 flex-1 min-w-0">
+            <h2 className="text-sm font-bold text-slate-900">
+              مبنای مرجع هر بخش سامانه
+              <span className="text-slate-400 font-medium text-[11px] mr-1.5">(بدون اتصال زنده به سامانه‌های دولتی)</span>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-              <div className="bg-slate-800/80 border border-slate-700 p-3.5 rounded-lg">
-                <div className="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
+              <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
+                <div className="font-bold text-amber-700 mb-1 flex items-center gap-1.5">
                   <Building2 className="w-4 h-4" />
                   <span>۱. موجودی انبار و وضعیت ترخیص کارگوها:</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed">
-                  مبتنی بر <strong>سامانه جامع انبارها و مراکز نگهداری کالا (NTSW)</strong> و قبوض انبار مناطق ویژه اقتصادی گمرک شهید رجایی بندرعباس، منطقه ویژه بوشهر و گمرک فرودگاه امام خمینی (ره).
+                <p className="text-slate-600 leading-relaxed">
+                  ساختار داده از <strong>سامانه جامع انبارها و مراکز نگهداری کالا (NTSW)</strong> و قبوض انبار مناطق ویژه الگوبرداری شده است؛ در نسخه فعلی مقادیر به‌صورت نمونه ثبت می‌شوند.
                 </p>
               </div>
 
-              <div className="bg-slate-800/80 border border-slate-700 p-3.5 rounded-lg">
-                <div className="font-bold text-blue-300 mb-1 flex items-center gap-1.5">
+              <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
+                <div className="font-bold text-indigo-700 mb-1 flex items-center gap-1.5">
                   <TrendingUp className="w-4 h-4" />
                   <span>۲. روند حجم واردات و سهم بازار:</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed">
-                  مبتنی بر <strong>سالنامه آمار تجارت خارجی گمرک ایران (IRICA)</strong> تلفیق‌شده با داده‌های آمار تجارت معکوس <strong>ITC Trade Map سازمان تجارت جهانی (WTO/UNCTAD)</strong> بر مبنای کدهای ۸ رقمی.
+                <p className="text-slate-600 leading-relaxed">
+                  بر اساس ساختار <strong>سالنامه آمار تجارت خارجی گمرک ایران (IRICA)</strong> و <strong>ITC Trade Map (WTO/UNCTAD)</strong>؛ اعداد نمایشی فعلی نمونه هستند و به‌صورت زنده استعلام نمی‌شوند.
                 </p>
               </div>
 
-              <div className="bg-slate-800/80 border border-slate-700 p-3.5 rounded-lg">
-                <div className="font-bold text-emerald-300 mb-1 flex items-center gap-1.5">
+              <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
+                <div className="font-bold text-emerald-700 mb-1 flex items-center gap-1.5">
                   <Ship className="w-4 h-4" />
                   <span>۳. بارنامه‌ها و تحویل دریایی:</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed">
-                  مبتنی بر <strong>مانیفست‌های بارنامه‌های کانتینری ImportYeti</strong> و خطوط کشتیرانی (IRISL و فیدرهای دبی-بندرعباس) با زمان دریانوردی واقعی و رهگیری کانتینرهای ۴۰HQ.
+                <p className="text-slate-600 leading-relaxed">
+                  بر اساس ساختار <strong>مانیفست‌های بارنامه ImportYeti</strong> و خطوط کشتیرانی؛ در نسخه فعلی داده‌ی حمل‌ونقل نمونه است و رهگیری زنده کانتینر وجود ندارد.
                 </p>
               </div>
             </div>
@@ -154,7 +155,7 @@ export const DataProvenanceView: React.FC = () => {
                 onClick={() => setSelectedSourceId(src.id)}
                 className={`w-full p-3 rounded-xl border text-right transition-all flex items-start justify-between gap-3 ${
                   isSelected
-                    ? 'border-blue-600 bg-blue-50 text-blue-950 shadow-sm ring-1 ring-blue-600'
+                    ? 'border-indigo-600 bg-blue-50 text-blue-950 shadow-sm ring-1 ring-indigo-600'
                     : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 text-slate-700'
                 }`}
               >
