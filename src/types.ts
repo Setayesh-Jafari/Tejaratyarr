@@ -356,6 +356,11 @@ export interface HealthResponse {
   aiEnabled: boolean;
   model?: string;
   version: string;
+  /**
+   * حالت ارائه/دمو (SEED_DEMO=1). وقتی true است یعنی داده‌های کارتابل
+   * از «داده‌ی نمونه» پر شده‌اند و UI باید این را صریح اعلام کند.
+   */
+  demoMode?: boolean;
 }
 
 export interface BootstrapResponse {

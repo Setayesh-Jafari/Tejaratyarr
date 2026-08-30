@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Plus, Menu, Cpu, TrendingUp, TrendingDown, Sparkles } from 'lucide-react';
+import { Search, Plus, Menu, Cpu, TrendingUp, TrendingDown, Sparkles, Clapperboard } from 'lucide-react';
 import { ActiveView } from '../types';
 import { useStore } from '../store/AppStore';
 
@@ -99,6 +99,17 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </div>
         </div>
+
+        {/* حالت ارائه — وقتی سرور با SEED_DEMO=1 بالا آمده باشد صریح اعلام می‌شود */}
+        {health?.demoMode && (
+          <div
+            className="hidden sm:flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold border bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200"
+            title="حالت ارائه: داده‌های کارتابل نمونه است (SEED_DEMO=1) و با داده‌ی واقعی اشتباه نشود."
+          >
+            <Clapperboard className="w-3.5 h-3.5" />
+            <span>داده نمونه — حالت ارائه</span>
+          </div>
+        )}
 
         {/* وضعیت هوش مصنوعی */}
         <div

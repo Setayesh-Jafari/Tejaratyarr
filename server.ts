@@ -6,7 +6,7 @@
  */
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
-import { db, uid } from './server/db';
+import { db, uid, isDemoMode } from './server/db';
 import { hsSuggest, supplierCheck, isAiEnabled, modelName } from './server/ai';
 import type { InventoryUnit, SupplierRecord, TradeAssessmentDossier, AppSettings } from './src/types';
 
@@ -40,7 +40,7 @@ async function startServer() {
   /* ----------------------------- سلامت ----------------------------- */
 
   app.get('/api/health', (_req, res) => {
-    res.json({ ok: true, aiEnabled: isAiEnabled(), model: modelName(), version: '2.0.0' });
+    res.json({ ok: true, aiEnabled: isAiEnabled(), model: modelName(), version: '2.0.0', demoMode: isDemoMode() });
   });
 
   /* ---------------------------- Bootstrap --------------------------- */
@@ -144,6 +144,34 @@ async function startServer() {
     res.json(db.patchSettings(p));
   }));
 
+  /* --------------------- Demo / حالت ارائه ------------------------ */
+  /*
+   * این اندپوینت‌ها فقط وقتی فعال‌اند که سرور با SEED_DEMO=1 بالا آمده باشد؛
+   * یعنی در محیط واقعی (بدون این متغیر) هیچ راهی برای تزریق داده‌ی نمونه وجود ندارد.
+   */
+
+  const demoCounts = () => ({
+    inventory: db.getInventory().length,
+    suppliers: db.getSuppliers().length,
+    assessments: db.getAssessments().length,
+  });
+
+  app.get('/api/demo/state', wrap((_req, res) => {
+    res.json({ demoMode: isDemoMode(), counts: demoCounts() });
+  }));
+
+  app.post('/api/demo/seed', wrap((_req, res) => {
+    if (!isDemoMode()) return bad(res, 403, 'حالت ارائه فعال نیست؛ سرور را با SEED_DEMO=1 اجرا کنید.');
+    db.reset();
+    res.json({ ok: true, demoMode: true, counts: demoCounts() });
+  }));
+
+  app.post('/api/demo/clear', wrap((_req, res) => {
+    if (!isDemoMode()) return bad(res, 403, 'حالت ارائه فعال نیست؛ سرور را با SEED_DEMO=1 اجرا کنید.');
+    db.resetToEmpty();
+    res.json({ ok: true, demoMode: true, counts: demoCounts() });
+  }));
+
   /* ------------------------------- AI ------------------------------- */
 
   app.post('/api/ai/hs-suggest', wrap(async (req, res) => {
@@ -185,6 +213,10 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 سرور تجارت‌یار روی http://0.0.0.0:${PORT} آماده است. وضعیت هوش مصنوعی: ${isAiEnabled() ? `فعال (${modelName()})` : 'غیرفعال (موتور محلی فعال است)'}`);
+    if (isDemoMode()) {
+      const c = { inventory: db.getInventory().length, suppliers: db.getSuppliers().length, assessments: db.getAssessments().length };
+      console.log(`🎬 حالت ارائه (SEED_DEMO=1) فعال است — داده‌ی نمونه: ${c.inventory} پرونده، ${c.suppliers} تأمین‌کننده، ${c.assessments} ارزیابی.`);
+    }
   });
 }
 

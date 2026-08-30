@@ -46123,29 +46123,947 @@ var import_path2 = __toESM(require("path"), 1);
 // server/db.ts
 var import_fs = __toESM(require("fs"), 1);
 var import_path = __toESM(require("path"), 1);
+
+// src/data/mockData.ts
+var INITIAL_INVENTORY = [
+  {
+    id: "CARGO-IR-0001",
+    sku: "IMP-0001",
+    vinOrCode: "PV-550W-2024-001",
+    name: "\u067E\u0646\u0644 \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC \u0645\u0648\u0646\u0648\u06A9\u0631\u06CC\u0633\u062A\u0627\u0644 \u06F5\u06F5\u06F0 \u0648\u0627\u062A",
+    category: "\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC \u0648 \u0628\u0631\u0642",
+    specifications: "\u062A\u0648\u0627\u0646 \u06F5\u06F5\u06F0 \u0648\u0627\u062A\u060C \u0641\u0646\u0627\u0648\u0631\u06CC N-Type TOPCon\u060C \u0628\u0627\u0632\u062F\u0647\u06CC \u06F2\u06F2.\u06F8\u066A\u060C \u06AF\u0648\u0627\u0647\u06CC\u0646\u0627\u0645\u0647 T\xDCV \u0648 \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F IEC 61215",
+    originCountry: "\u0686\u06CC\u0646 (\u0628\u0646\u062F\u0631 \u0634\u0627\u0646\u06AF\u0647\u0627\u06CC)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F1",
+    status: "\u0645\u0648\u062C\u0648\u062F \u062F\u0631 \u0627\u0646\u0628\u0627\u0631 (\u062A\u0631\u062E\u06CC\u0635 \u0634\u062F\u0647)",
+    stockQty: 620,
+    unit: "\u0639\u062F\u062F",
+    costPriceUsd: 62,
+    landedCostToman: 5.1,
+    fxRateAtLandedToman: 64e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 10.4,
+    hsCode: "8541.43.00",
+    samtGroup: "\u06F2\u06F1",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0634\u0647\u06CC\u062F \u0631\u062C\u0627\u06CC\u06CC \u0628\u0646\u062F\u0631\u0639\u0628\u0627\u0633",
+    orderRegCode: "140398214",
+    fxType: "\u0627\u0631\u0632 \u0646\u06CC\u0645\u0627\u06CC\u06CC (\u0633\u0627\u0645\u0627\u0646\u0647 \u0646\u06CC\u0645\u0627)",
+    supplierName: "Jinko Solar Holdings Co., Ltd",
+    supplierRating: 92,
+    complianceGate: "\u062A\u0623\u06CC\u06CC\u062F \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F \u0648 \u0628\u0647\u062F\u0627\u0634\u062A",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0002",
+    sku: "IMP-0002",
+    vinOrCode: "INV-HYB-5K-002",
+    name: "\u0627\u06CC\u0646\u0648\u0631\u062A\u0631 \u0647\u06CC\u0628\u0631\u06CC\u062F \u06F5 \u06A9\u06CC\u0644\u0648\u0648\u0627\u062A \u0628\u0627 \u0634\u0627\u0631\u0698\u0631 \u0628\u0627\u062A\u0631\u06CC",
+    category: "\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC \u0648 \u0628\u0631\u0642",
+    specifications: "\u0647\u06CC\u0628\u0631\u06CC\u062F Off-Grid \u0628\u0627 \u0634\u0627\u0631\u0698\u0631 \u0628\u0627\u062A\u0631\u06CC \u062F\u0627\u062E\u0644\u06CC\u060C \u062F\u0648 MPPT \u0645\u0633\u062A\u0642\u0644\u060C \u0631\u0627\u0646\u062F\u0645\u0627\u0646 \u06F9\u06F7.\u06F5\u066A",
+    originCountry: "\u0686\u06CC\u0646 (\u0634\u0646\u0698\u0646)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F2",
+    status: "\u062F\u0631 \u06AF\u0645\u0631\u06A9 (\u062F\u0631 \u062D\u0627\u0644 \u062A\u0631\u062E\u06CC\u0635)",
+    stockQty: 40,
+    unit: "\u062F\u0633\u062A\u06AF\u0627\u0647",
+    costPriceUsd: 340,
+    landedCostToman: 27,
+    fxRateAtLandedToman: 64e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 48,
+    hsCode: "8504.40.90",
+    samtGroup: "\u06F2\u06F1",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0641\u0631\u0648\u062F\u06AF\u0627\u0647 \u0627\u0645\u0627\u0645 \u062E\u0645\u06CC\u0646\u06CC (\u0631\u0647)",
+    orderRegCode: "140398501",
+    fxType: "\u0627\u0631\u0632 \u0646\u06CC\u0645\u0627\u06CC\u06CC (\u0633\u0627\u0645\u0627\u0646\u0647 \u0646\u06CC\u0645\u0627)",
+    supplierName: "Growatt New Energy Technology Co., Ltd",
+    supplierRating: 88,
+    complianceGate: "\u062F\u0631 \u062D\u0627\u0644 \u0628\u0627\u0632\u0631\u0633\u06CC \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F (COI)",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0003",
+    sku: "IMP-0003",
+    vinOrCode: "BAT-LFP-5K-003",
+    name: "\u0628\u0627\u062A\u0631\u06CC \u0644\u06CC\u062A\u06CC\u0648\u0645\u06CC LiFePO4 \u067E\u0646\u062C \u06A9\u06CC\u0644\u0648\u0648\u0627\u062A\u200C\u0633\u0627\u0639\u062A",
+    category: "\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC \u0648 \u0628\u0631\u0642",
+    specifications: "\u0633\u0644\u0648\u0644 LiFePO4 \u0628\u0627 BMS \u0647\u0648\u0634\u0645\u0646\u062F\u060C \u0639\u0645\u0631 \u06F6\u06F0\u06F0\u06F0 \u0633\u06CC\u06A9\u0644\u060C \u0645\u0646\u0627\u0633\u0628 \u0630\u062E\u06CC\u0631\u0647\u200C\u0633\u0627\u0632\u06CC \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC",
+    originCountry: "\u0686\u06CC\u0646 (\u0646\u06CC\u0646\u06AF\u062F\u0647)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F1",
+    status: "\u062F\u0631 \u062D\u0627\u0644 \u062A\u0631\u0627\u0646\u0632\u06CC\u062A \u0628\u06CC\u0646\u200C\u0627\u0644\u0645\u0644\u0644\u06CC",
+    stockQty: 60,
+    unit: "\u062F\u0633\u062A\u06AF\u0627\u0647",
+    costPriceUsd: 1200,
+    landedCostToman: 96,
+    fxRateAtLandedToman: 62e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 165,
+    hsCode: "8507.60.00",
+    samtGroup: "\u06F2\u06F1",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0634\u0647\u06CC\u062F \u0631\u062C\u0627\u06CC\u06CC \u0628\u0646\u062F\u0631\u0639\u0628\u0627\u0633",
+    orderRegCode: "140398335",
+    fxType: "\u0627\u0631\u0632 \u062A\u0627\u0644\u0627\u0631 \u062F\u0648\u0645 (\u062A\u0648\u0627\u0641\u0642\u06CC)",
+    supplierName: "CATL (Contemporary Amperex Technology Co., Ltd)",
+    supplierRating: 95,
+    complianceGate: "\u062A\u0623\u06CC\u06CC\u062F \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F \u0648 \u0628\u0647\u062F\u0627\u0634\u062A",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0004",
+    sku: "IMP-0004",
+    vinOrCode: "COIL-DX51D-004",
+    name: "\u0648\u0631\u0642 \u06AF\u0627\u0644\u0648\u0627\u0646\u06CC\u0632\u0647 \u06AF\u0631\u0645 DX51D \u0631\u0648\u0644 \u06F0.\u06F5 \u0645\u06CC\u0644\u06CC\u200C\u0645\u062A\u0631",
+    category: "\u0641\u0648\u0644\u0627\u062F \u0648 \u0645\u0648\u0627\u062F \u0627\u0648\u0644\u06CC\u0647 \u0635\u0646\u0639\u062A\u06CC",
+    specifications: "\u0639\u0631\u0636 \u06F1\u06F2\u06F5\u06F0 \u0645\u06CC\u0644\u06CC\u200C\u0645\u062A\u0631\u060C \u0631\u0648\u06A9\u0634 \u0631\u0648\u06CC \u06F1\u06F2\u06F0 \u06AF\u0631\u0645 \u0628\u0631 \u0645\u062A\u0631\u0645\u0631\u0628\u0639\u060C \u06A9\u0644\u0627\u0641 \u06F5 \u062A\u0646\u06CC",
+    originCountry: "\u0686\u06CC\u0646 (\u067E\u06A9\u0646)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F3",
+    status: "\u062F\u0631 \u06AF\u0645\u0631\u06A9 (\u062F\u0631 \u062D\u0627\u0644 \u062A\u0631\u062E\u06CC\u0635)",
+    stockQty: 480,
+    unit: "\u062A\u0646",
+    costPriceUsd: 720,
+    landedCostToman: 66,
+    fxRateAtLandedToman: 62e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 88,
+    hsCode: "7210.49.00",
+    samtGroup: "\u06F2\u06F2",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0628\u0646\u062F\u0631 \u0627\u0645\u0627\u0645 \u062E\u0645\u06CC\u0646\u06CC (\u0631\u0647)",
+    orderRegCode: "140397733",
+    fxType: "\u0627\u0631\u0632 \u0627\u0634\u062E\u0627\u0635 / \u0635\u0627\u062F\u0631\u0627\u062A \u062E\u0648\u062F",
+    supplierName: "Shougang Group Co., Ltd",
+    supplierRating: 84,
+    complianceGate: "\u062F\u0631 \u062D\u0627\u0644 \u0628\u0627\u0632\u0631\u0633\u06CC \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F (COI)",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0005",
+    sku: "IMP-0005",
+    vinOrCode: "CU-CATH-005",
+    name: "\u06A9\u0627\u062A\u062F \u0645\u0633 \u0627\u0644\u06A9\u062A\u0631\u0648\u0644\u06CC\u062A\u06CC \u06F9\u06F9.\u06F9\u06F9\u066A",
+    category: "\u0641\u0648\u0644\u0627\u062F \u0648 \u0645\u0648\u0627\u062F \u0627\u0648\u0644\u06CC\u0647 \u0635\u0646\u0639\u062A\u06CC",
+    specifications: "\u0635\u0641\u062D\u0627\u062A \u06A9\u0627\u062A\u062F \u06F1\xD7\u06F1 \u0645\u062A\u0631\u060C \u062E\u0644\u0648\u0635 \u06F9\u06F9.\u06F9\u06F9\u066A\u060C \u0645\u0628\u062F\u0627 \u0634\u06CC\u0644\u06CC",
+    originCountry: "\u0634\u06CC\u0644\u06CC (\u0622\u0646\u062A\u0648\u0641\u0627\u06AF\u0627\u0633\u062A\u0627)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F2",
+    status: "\u0645\u0648\u062C\u0648\u062F \u062F\u0631 \u0627\u0646\u0628\u0627\u0631 (\u062A\u0631\u062E\u06CC\u0635 \u0634\u062F\u0647)",
+    stockQty: 25,
+    unit: "\u062A\u0646",
+    costPriceUsd: 9200,
+    landedCostToman: 737,
+    fxRateAtLandedToman: 62e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 830,
+    hsCode: "7403.11.00",
+    samtGroup: "\u06F2\u06F2",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0634\u0647\u06CC\u062F \u0631\u062C\u0627\u06CC\u06CC \u0628\u0646\u062F\u0631\u0639\u0628\u0627\u0633",
+    orderRegCode: "140397460",
+    fxType: "\u0627\u0631\u0632 \u0627\u0634\u062E\u0627\u0635 / \u0635\u0627\u062F\u0631\u0627\u062A \u062E\u0648\u062F",
+    supplierName: "Codelco (Corporaci\xF3n Nacional del Cobre)",
+    supplierRating: 90,
+    complianceGate: "\u062A\u0623\u06CC\u06CC\u062F \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F \u0648 \u0628\u0647\u062F\u0627\u0634\u062A",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0006",
+    sku: "IMP-0006",
+    vinOrCode: "VIN-BEV-006",
+    name: "\u062E\u0648\u062F\u0631\u0648\u06CC \u0628\u0631\u0642\u06CC \u0633\u062F\u0627\u0646 (BEV) \u06F6\u06F0 \u06A9\u06CC\u0644\u0648\u0648\u0627\u062A\u200C\u0633\u0627\u0639\u062A",
+    category: "\u062E\u0648\u062F\u0631\u0648 \u0648 \u0645\u0627\u0634\u06CC\u0646\u200C\u0622\u0644\u0627\u062A \u0635\u0646\u0639\u062A\u06CC",
+    specifications: "\u0645\u0648\u062A\u0648\u0631 \u0627\u0644\u06A9\u062A\u0631\u06CC\u06A9\u06CC \u06F1\u06F5\u06F0 \u06A9\u06CC\u0644\u0648\u0648\u0627\u062A\u060C \u0628\u0627\u062A\u0631\u06CC \u06F6\u06F0 \u06A9\u06CC\u0644\u0648\u0648\u0627\u062A\u200C\u0633\u0627\u0639\u062A\u060C \u0628\u0631\u062F \u06F4\u06F8\u06F0 \u06A9\u06CC\u0644\u0648\u0645\u062A\u0631",
+    originCountry: "\u0686\u06CC\u0646 (\u0634\u0646\u0698\u0646)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F4",
+    status: "\u062F\u0631 \u0627\u0646\u062A\u0638\u0627\u0631 \u062A\u062E\u0635\u06CC\u0635 \u0627\u0631\u0632 \u0648 \u062B\u0628\u062A \u0633\u0641\u0627\u0631\u0634",
+    stockQty: 8,
+    unit: "\u062F\u0633\u062A\u06AF\u0627\u0647",
+    costPriceUsd: 18500,
+    landedCostToman: 2180,
+    fxRateAtLandedToman: 62e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 3400,
+    hsCode: "8703.80.00",
+    samtGroup: "\u06F2\u06F3",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u063A\u0631\u0628 \u062A\u0647\u0631\u0627\u0646",
+    orderRegCode: "140398899",
+    fxType: "\u0627\u0631\u0632 \u0622\u0632\u0627\u062F \u062A\u062C\u0627\u0631\u06CC",
+    supplierName: "BYD Auto Co., Ltd",
+    supplierRating: 89,
+    complianceGate: "\u0646\u06CC\u0627\u0632\u0645\u0646\u062F \u0627\u0635\u0644\u0627\u062D \u0627\u0633\u0646\u0627\u062F \u06AF\u0645\u0631\u06A9\u06CC",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0007",
+    sku: "IMP-0007",
+    vinOrCode: "US-DOP-007",
+    name: "\u062F\u0633\u062A\u06AF\u0627\u0647 \u0633\u0648\u0646\u0648\u06AF\u0631\u0627\u0641\u06CC \u062A\u0634\u062E\u06CC\u0635\u06CC \u062F\u0627\u067E\u0644\u0631 \u0631\u0646\u06AF\u06CC",
+    category: "\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u067E\u0632\u0634\u06A9\u06CC \u0648 \u0622\u0632\u0645\u0627\u06CC\u0634\u06AF\u0627\u0647\u06CC",
+    specifications: "\u0645\u0627\u0698\u0648\u0644 \u062F\u0627\u067E\u0644\u0631 \u0631\u0646\u06AF\u06CC/\u067E\u0627\u0644\u0633\u060C \u062F\u0648 \u067E\u0631\u0648\u0628 \u0645\u062D\u062F\u0628 \u0648 \u062E\u0637\u06CC\u060C \u0645\u0627\u0646\u06CC\u062A\u0648\u0631 \u06F2\u06F1 \u0627\u06CC\u0646\u0686",
+    originCountry: "\u0686\u06CC\u0646 (\u0634\u0646\u0698\u0646)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F1",
+    status: "\u0645\u0648\u062C\u0648\u062F \u062F\u0631 \u0627\u0646\u0628\u0627\u0631 (\u062A\u0631\u062E\u06CC\u0635 \u0634\u062F\u0647)",
+    stockQty: 6,
+    unit: "\u062F\u0633\u062A\u06AF\u0627\u0647",
+    costPriceUsd: 24e3,
+    landedCostToman: 1900,
+    fxRateAtLandedToman: 62e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 2900,
+    hsCode: "9018.12.00",
+    samtGroup: "\u06F2\u06F4",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0641\u0631\u0648\u062F\u06AF\u0627\u0647 \u0627\u0645\u0627\u0645 \u062E\u0645\u06CC\u0646\u06CC (\u0631\u0647)",
+    orderRegCode: "140398120",
+    fxType: "\u0627\u0631\u0632 \u0627\u0634\u062E\u0627\u0635 / \u0635\u0627\u062F\u0631\u0627\u062A \u062E\u0648\u062F",
+    supplierName: "Mindray Medical International Limited",
+    supplierRating: 93,
+    complianceGate: "\u062A\u0623\u06CC\u06CC\u062F \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F \u0648 \u0628\u0647\u062F\u0627\u0634\u062A",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0008",
+    sku: "IMP-0008",
+    vinOrCode: "WHT-BULK-008",
+    name: "\u06AF\u0646\u062F\u0645 \u062E\u0648\u0631\u0627\u06A9\u06CC \u0622\u0633\u06CC\u0627\u0628\u200C\u0646\u0634\u062F\u0647",
+    category: "\u06A9\u0627\u0644\u0627\u0647\u0627\u06CC \u0627\u0633\u0627\u0633\u06CC \u0648 \u06A9\u0634\u0627\u0648\u0631\u0632\u06CC",
+    specifications: "\u067E\u0631\u0648\u062A\u0626\u06CC\u0646 \u06F1\u06F2.\u06F5\u066A\u060C \u0631\u0637\u0648\u0628\u062A \u06F1\u06F3\u066A\u060C \u0641\u0644\u0647 \u062F\u0631 \u06A9\u0634\u062A\u06CC",
+    originCountry: "\u0641\u0631\u0627\u0646\u0633\u0647 (\u0631\u0648\u0627\u0646)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F2",
+    status: "\u0631\u0632\u0631\u0648 \u0645\u0634\u062A\u0631\u06CC / \u067E\u06CC\u0634\u200C\u0641\u0631\u0648\u0634",
+    stockQty: 2500,
+    unit: "\u062A\u0646",
+    costPriceUsd: 280,
+    landedCostToman: 21,
+    fxRateAtLandedToman: 64e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 26,
+    hsCode: "1001.99.00",
+    samtGroup: "\u06F2\u06F5",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0628\u0646\u062F\u0631 \u0627\u0645\u0627\u0645 \u062E\u0645\u06CC\u0646\u06CC (\u0631\u0647)",
+    orderRegCode: "140397002",
+    fxType: "\u0627\u0631\u0632 \u0646\u06CC\u0645\u0627\u06CC\u06CC (\u0633\u0627\u0645\u0627\u0646\u0647 \u0646\u06CC\u0645\u0627)",
+    supplierName: "Soufflet Group",
+    supplierRating: 91,
+    complianceGate: "\u062A\u0623\u06CC\u06CC\u062F \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F \u0648 \u0628\u0647\u062F\u0627\u0634\u062A",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0009",
+    sku: "IMP-0009",
+    vinOrCode: "RICE-BSM-009",
+    name: "\u0628\u0631\u0646\u062C \u0628\u0627\u0633\u0645\u0627\u062A\u06CC \u06F1\u06F1\u06F2\u06F1 \u0633\u0641\u06CC\u062F \u062F\u0627\u0646\u0647 \u0628\u0644\u0646\u062F",
+    category: "\u06A9\u0627\u0644\u0627\u0647\u0627\u06CC \u0627\u0633\u0627\u0633\u06CC \u0648 \u06A9\u0634\u0627\u0648\u0631\u0632\u06CC",
+    specifications: "\u062F\u0627\u0646\u0647 \u0628\u0644\u0646\u062F \u06F8.\u06F3 \u0645\u06CC\u0644\u06CC\u200C\u0645\u062A\u0631\u060C \u0628\u0633\u062A\u0647\u200C\u0628\u0646\u062F\u06CC \u06F2\u06F0 \u06A9\u06CC\u0644\u0648\u06AF\u0631\u0645\u06CC",
+    originCountry: "\u0647\u0646\u062F (\u062F\u0647\u0644\u06CC)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F3",
+    status: "\u062F\u0631 \u062D\u0627\u0644 \u062A\u0631\u0627\u0646\u0632\u06CC\u062A \u0628\u06CC\u0646\u200C\u0627\u0644\u0645\u0644\u0644\u06CC",
+    stockQty: 200,
+    unit: "\u062A\u0646",
+    costPriceUsd: 1100,
+    landedCostToman: 96,
+    fxRateAtLandedToman: 62e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 130,
+    hsCode: "1006.30.00",
+    samtGroup: "\u06F2\u06F5",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0634\u0647\u06CC\u062F \u0631\u062C\u0627\u06CC\u06CC \u0628\u0646\u062F\u0631\u0639\u0628\u0627\u0633",
+    orderRegCode: "140398455",
+    fxType: "\u0627\u0631\u0632 \u0627\u0634\u062E\u0627\u0635 / \u0635\u0627\u062F\u0631\u0627\u062A \u062E\u0648\u062F",
+    supplierName: "KRBL Limited",
+    supplierRating: 87,
+    complianceGate: "\u062F\u0631 \u062D\u0627\u0644 \u0628\u0627\u0632\u0631\u0633\u06CC \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F (COI)",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0010",
+    sku: "IMP-0010",
+    vinOrCode: "COF-GRN-010",
+    name: "\u062F\u0627\u0646\u0647 \u0642\u0647\u0648\u0647 \u0633\u0628\u0632 \u0639\u0631\u0628\u06CC\u06A9\u0627 (\u0628\u0648 \u0646\u062F\u0627\u062F\u0647)",
+    category: "\u06A9\u0627\u0644\u0627\u0647\u0627\u06CC \u0627\u0633\u0627\u0633\u06CC \u0648 \u06A9\u0634\u0627\u0648\u0631\u0632\u06CC",
+    specifications: "\u0639\u0631\u0628\u06CC\u06A9\u0627 \u06F8\u06F4 \u0627\u0633\u06A9\u0631\u06CC\u0646\u060C \u06A9\u06CC\u0633\u0647 \u06F6\u06F0 \u06A9\u06CC\u0644\u0648\u06AF\u0631\u0645\u06CC\u060C \u0631\u0637\u0648\u0628\u062A \u06F1\u06F1.\u06F5\u066A",
+    originCountry: "\u06A9\u0644\u0645\u0628\u06CC\u0627 (\u0647\u0648\u0626\u06CC\u0644\u0627)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F1",
+    status: "\u062F\u0631 \u06AF\u0645\u0631\u06A9 (\u062F\u0631 \u062D\u0627\u0644 \u062A\u0631\u062E\u06CC\u0635)",
+    stockQty: 18,
+    unit: "\u062A\u0646",
+    costPriceUsd: 3800,
+    landedCostToman: 333,
+    fxRateAtLandedToman: 62e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 470,
+    hsCode: "0901.11.00",
+    samtGroup: "\u06F2\u06F5",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0634\u0647\u06CC\u062F \u0631\u062C\u0627\u06CC\u06CC \u0628\u0646\u062F\u0631\u0639\u0628\u0627\u0633",
+    orderRegCode: "140398233",
+    fxType: "\u0627\u0631\u0632 \u0627\u0634\u062E\u0627\u0635 / \u0635\u0627\u062F\u0631\u0627\u062A \u062E\u0648\u062F",
+    supplierName: "Cooperativa de Caficultores del Huila",
+    supplierRating: 85,
+    complianceGate: "\u0646\u06CC\u0627\u0632\u0645\u0646\u062F \u0627\u0635\u0644\u0627\u062D \u0627\u0633\u0646\u0627\u062F \u06AF\u0645\u0631\u06A9\u06CC",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0011",
+    sku: "IMP-0011",
+    vinOrCode: "LT-ENG-011",
+    name: "\u0644\u067E\u200C\u062A\u0627\u067E \u0645\u0647\u0646\u062F\u0633\u06CC \u06F1\u06F5.\u06F6 \u0627\u06CC\u0646\u0686",
+    category: "\u0642\u0637\u0639\u0627\u062A \u0627\u0644\u06A9\u062A\u0631\u0648\u0646\u06CC\u06A9 \u0648 IT",
+    specifications: "\u067E\u0631\u062F\u0627\u0632\u0646\u062F\u0647 i7\u060C \u0631\u0645 \u06F1\u06F6 \u06AF\u06CC\u06AF\u060C SSD \u06CC\u06A9 \u062A\u0631\u0627\u0628\u0627\u06CC\u062A\u060C \u06AF\u0631\u0627\u0641\u06CC\u06A9 \u062D\u0631\u0641\u0647\u200C\u0627\u06CC",
+    originCountry: "\u0686\u06CC\u0646 (\u0634\u0627\u0646\u06AF\u0647\u0627\u06CC)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F5",
+    status: "\u062F\u0631 \u0627\u0646\u062A\u0638\u0627\u0631 \u062A\u062E\u0635\u06CC\u0635 \u0627\u0631\u0632 \u0648 \u062B\u0628\u062A \u0633\u0641\u0627\u0631\u0634",
+    stockQty: 120,
+    unit: "\u062F\u0633\u062A\u06AF\u0627\u0647",
+    costPriceUsd: 820,
+    landedCostToman: 82,
+    fxRateAtLandedToman: 64e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 135,
+    hsCode: "8471.30.00",
+    samtGroup: "\u06F2\u06F3",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0641\u0631\u0648\u062F\u06AF\u0627\u0647 \u0627\u0645\u0627\u0645 \u062E\u0645\u06CC\u0646\u06CC (\u0631\u0647)",
+    orderRegCode: "140398620",
+    fxType: "\u0627\u0631\u0632 \u0646\u06CC\u0645\u0627\u06CC\u06CC (\u0633\u0627\u0645\u0627\u0646\u0647 \u0646\u06CC\u0645\u0627)",
+    supplierName: "Lenovo Group Ltd",
+    supplierRating: 90,
+    complianceGate: "\u062F\u0631 \u062D\u0627\u0644 \u0628\u0627\u0632\u0631\u0633\u06CC \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F (COI)",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0012",
+    sku: "IMP-0012",
+    vinOrCode: "PH-AND-012",
+    name: "\u06AF\u0648\u0634\u06CC \u0647\u0648\u0634\u0645\u0646\u062F \u0627\u0646\u062F\u0631\u0648\u06CC\u062F\u06CC \u06F1\u06F2\u06F8 \u06AF\u06CC\u06AF\u0627\u0628\u0627\u06CC\u062A",
+    category: "\u0642\u0637\u0639\u0627\u062A \u0627\u0644\u06A9\u062A\u0631\u0648\u0646\u06CC\u06A9 \u0648 IT",
+    specifications: "\u0635\u0641\u062D\u0647 \u06F6.\u06F6 \u0627\u06CC\u0646\u0686 AMOLED\u060C \u0631\u0645 \u06F8 \u06AF\u06CC\u06AF\u060C \u062F\u0648\u0631\u0628\u06CC\u0646 \u06F5\u06F0 \u0645\u06AF\u0627\u067E\u06CC\u06A9\u0633\u0644\u060C 5G",
+    originCountry: "\u0686\u06CC\u0646 (\u0634\u0646\u0698\u0646)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F6",
+    status: "\u062F\u0631 \u0627\u0646\u062A\u0638\u0627\u0631 \u062A\u062E\u0635\u06CC\u0635 \u0627\u0631\u0632 \u0648 \u062B\u0628\u062A \u0633\u0641\u0627\u0631\u0634",
+    stockQty: 500,
+    unit: "\u062F\u0633\u062A\u06AF\u0627\u0647",
+    costPriceUsd: 210,
+    landedCostToman: 21,
+    fxRateAtLandedToman: 64e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 33,
+    hsCode: "8517.13.00",
+    samtGroup: "\u06F2\u06F3",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0641\u0631\u0648\u062F\u06AF\u0627\u0647 \u0627\u0645\u0627\u0645 \u062E\u0645\u06CC\u0646\u06CC (\u0631\u0647)",
+    orderRegCode: "140398311",
+    fxType: "\u0627\u0631\u0632 \u0646\u06CC\u0645\u0627\u06CC\u06CC (\u0633\u0627\u0645\u0627\u0646\u0647 \u0646\u06CC\u0645\u0627)",
+    supplierName: "Xiaomi Communications Co., Ltd",
+    supplierRating: 91,
+    complianceGate: "\u062A\u0623\u06CC\u06CC\u062F \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F \u0648 \u0628\u0647\u062F\u0627\u0634\u062A",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0013",
+    sku: "IMP-0013",
+    vinOrCode: "EXC-20T-013",
+    name: "\u0628\u06CC\u0644 \u0645\u06A9\u0627\u0646\u06CC\u06A9\u06CC \u062E\u0632\u0646\u062F\u0647 \u06F2\u06F0 \u062A\u0646",
+    category: "\u062E\u0648\u062F\u0631\u0648 \u0648 \u0645\u0627\u0634\u06CC\u0646\u200C\u0622\u0644\u0627\u062A \u0635\u0646\u0639\u062A\u06CC",
+    specifications: "\u0648\u0632\u0646 \u0639\u0645\u0644\u06CC\u0627\u062A\u06CC \u06F2\u06F0 \u062A\u0646\u060C \u0645\u0648\u062A\u0648\u0631 \u06F1\u06F5\u06F0 \u0627\u0633\u0628\u060C \u0639\u0645\u0642 \u062D\u0641\u0627\u0631\u06CC \u06F6.\u06F5 \u0645\u062A\u0631",
+    originCountry: "\u0698\u0627\u067E\u0646 (\u0627\u0648\u0632\u0627\u06A9\u0627)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F1",
+    status: "\u0645\u0648\u062C\u0648\u062F \u062F\u0631 \u0627\u0646\u0628\u0627\u0631 (\u062A\u0631\u062E\u06CC\u0635 \u0634\u062F\u0647)",
+    stockQty: 2,
+    unit: "\u062F\u0633\u062A\u06AF\u0627\u0647",
+    costPriceUsd: 95e3,
+    landedCostToman: 7600,
+    fxRateAtLandedToman: 62e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 11800,
+    hsCode: "8429.52.00",
+    samtGroup: "\u06F2\u06F2",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0634\u0647\u06CC\u062F \u0631\u062C\u0627\u06CC\u06CC \u0628\u0646\u062F\u0631\u0639\u0628\u0627\u0633",
+    orderRegCode: "140396810",
+    fxType: "\u0627\u0631\u0632 \u0627\u0634\u062E\u0627\u0635 / \u0635\u0627\u062F\u0631\u0627\u062A \u062E\u0648\u062F",
+    supplierName: "Komatsu Ltd",
+    supplierRating: 94,
+    complianceGate: "\u062A\u0623\u06CC\u06CC\u062F \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F \u0648 \u0628\u0647\u062F\u0627\u0634\u062A",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  },
+  {
+    id: "CARGO-IR-0014",
+    sku: "IMP-0014",
+    vinOrCode: "GLV-NTR-014",
+    name: "\u062F\u0633\u062A\u06A9\u0634 \u0646\u06CC\u062A\u0631\u06CC\u0644 \u06CC\u06A9\u200C\u0628\u0627\u0631\u0645\u0635\u0631\u0641 (\u062C\u0639\u0628\u0647 \u06F1\u06F0\u06F0 \u0639\u062F\u062F\u06CC)",
+    category: "\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u067E\u0632\u0634\u06A9\u06CC \u0648 \u0622\u0632\u0645\u0627\u06CC\u0634\u06AF\u0627\u0647\u06CC",
+    specifications: "\u0646\u06CC\u062A\u0631\u06CC\u0644 \u0628\u062F\u0648\u0646 \u067E\u0648\u062F\u0631\u060C \u0633\u0627\u06CC\u0632 M\u060C \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F EN 455",
+    originCountry: "\u0645\u0627\u0644\u0632\u06CC (\u0633\u0644\u0627\u0646\u06AF\u0648\u0631)",
+    yearOrBatch: "\u06F2\u06F0\u06F2\u06F4 / \u067E\u0627\u0631\u062A \u06F2",
+    status: "\u0631\u0632\u0631\u0648 \u0645\u0634\u062A\u0631\u06CC / \u067E\u06CC\u0634\u200C\u0641\u0631\u0648\u0634",
+    stockQty: 2e4,
+    unit: "\u062C\u0639\u0628\u0647",
+    costPriceUsd: 3.2,
+    landedCostToman: 0.35,
+    fxRateAtLandedToman: 62e3,
+    // نرخ ارز زمان ترخیص (تومان/دلار — نمونه)
+    marketPriceToman: 0.55,
+    hsCode: "4015.12.00",
+    samtGroup: "\u06F2\u06F4",
+    customsPort: "\u06AF\u0645\u0631\u06A9 \u0634\u0647\u06CC\u062F \u0631\u062C\u0627\u06CC\u06CC \u0628\u0646\u062F\u0631\u0639\u0628\u0627\u0633",
+    orderRegCode: "140398047",
+    fxType: "\u0627\u0631\u0632 \u0627\u0634\u062E\u0627\u0635 / \u0635\u0627\u062F\u0631\u0627\u062A \u062E\u0648\u062F",
+    supplierName: "Hartalega Holdings Berhad",
+    supplierRating: 92,
+    complianceGate: "\u062A\u0623\u06CC\u06CC\u062F \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F \u0648 \u0628\u0647\u062F\u0627\u0634\u062A",
+    lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646"
+  }
+];
+var INITIAL_SUPPLIERS = [
+  {
+    id: "SUP-0001",
+    name: "Jinko Solar Holdings Co., Ltd",
+    country: "\u0686\u06CC\u0646 (\u0634\u0627\u0646\u06AF\u0647\u0627\u06CC)",
+    verifiedEntity: true,
+    tier: "\u062A\u0623\u0645\u06CC\u0646\u200C\u06A9\u0646\u0646\u062F\u0647 \u0645\u0639\u062A\u0628\u0631 \u0633\u0637\u062D \u06F1 (Tier 1)",
+    score: 92,
+    mainCategories: ["\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC \u0648 \u0628\u0631\u0642", "\u067E\u0646\u0644 \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC", "\u0645\u0627\u0698\u0648\u0644 \u0641\u062A\u0648\u0648\u0644\u062A\u0627\u0626\u06CC\u06A9"],
+    entityResolutionId: "CN-91310000-MA1-JNK",
+    moq: "\u06CC\u06A9 \u06A9\u0627\u0646\u062A\u06CC\u0646\u0631 \u06F4\u06F0 \u0641\u0648\u062A",
+    leadTime: "\u06F3 \u062A\u0627 \u06F5 \u0647\u0641\u062A\u0647",
+    certifications: ["ISO 9001", "IEC 61215", "T\xDCV Rheinland", "Bloomberg Tier 1"],
+    financialStability: "\u067E\u0627\u06CC\u062F\u0627\u0631 \u0648 \u0645\u0639\u062A\u0628\u0631",
+    sanctionCheck: "\u0627\u062D\u0631\u0627\u0632 \u0647\u0648\u06CC\u062A \u0648 \u062D\u0633\u0627\u0628 \u0628\u0627\u0646\u06A9\u06CC \u067E\u0627\u06A9",
+    contactPerson: "Zhang Wei (Export Manager)",
+    email: "export@jinkosolar.com",
+    phone: "+86 21 6061 1000",
+    notes: "\u06A9\u0627\u0631\u062E\u0627\u0646\u0647 \u062A\u0627\u06CC\u06CC\u062F\u0634\u062F\u0647\u061B \u0627\u0645\u06A9\u0627\u0646 \u0641\u0627\u06CC\u0646\u0627\u0646\u0633 \u0627\u0632 \u0637\u0631\u06CC\u0642 L/C \u0648 \u0627\u0631\u0633\u0627\u0644 FOB \u0634\u0627\u0646\u06AF\u0647\u0627\u06CC.",
+    sourceVerification: {
+      source: "CCPIT \u0686\u06CC\u0646 + ImportYeti",
+      isVerified: true,
+      confidence: 96,
+      notes: "\u0633\u0648\u0627\u0628\u0642 \u0628\u0627\u0631\u0646\u0627\u0645\u0647 \u06F2\u06F0\u06F2\u06F3-\u06F2\u06F0\u06F2\u06F4 \u062A\u0637\u0628\u06CC\u0642 \u062F\u0627\u062F\u0647 \u0634\u062F\u0647 \u0648 \u06AF\u0648\u0627\u0647\u06CC CCPIT \u0627\u062E\u0630 \u0634\u062F\u0647 \u0627\u0633\u062A."
+    }
+  },
+  {
+    id: "SUP-0002",
+    name: "Growatt New Energy Technology Co., Ltd",
+    country: "\u0686\u06CC\u0646 (\u0634\u0646\u0698\u0646)",
+    verifiedEntity: true,
+    tier: "\u062A\u0623\u0645\u06CC\u0646\u200C\u06A9\u0646\u0646\u062F\u0647 \u0645\u0639\u062A\u0628\u0631 \u0633\u0637\u062D \u06F1 (Tier 1)",
+    score: 88,
+    mainCategories: ["\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC \u0648 \u0628\u0631\u0642", "\u0627\u06CC\u0646\u0648\u0631\u062A\u0631", "\u0645\u0628\u062F\u0644 \u0627\u06CC\u0633\u062A\u0627"],
+    entityResolutionId: "CN-91440300-MA2-GRW",
+    moq: "\u06F5\u06F0 \u062F\u0633\u062A\u06AF\u0627\u0647",
+    leadTime: "\u06F4 \u062A\u0627 \u06F6 \u0647\u0641\u062A\u0647",
+    certifications: ["ISO 9001", "CE", "IEC 62109"],
+    financialStability: "\u067E\u0627\u06CC\u062F\u0627\u0631 \u0648 \u0645\u0639\u062A\u0628\u0631",
+    sanctionCheck: "\u0627\u062D\u0631\u0627\u0632 \u0647\u0648\u06CC\u062A \u0648 \u062D\u0633\u0627\u0628 \u0628\u0627\u0646\u06A9\u06CC \u067E\u0627\u06A9",
+    contactPerson: "Liu Fang (Intl. Sales)",
+    email: "sales@growatt.com",
+    phone: "+86 755 2966 6828",
+    notes: "\u0645\u062A\u062E\u0635\u0635 \u0627\u06CC\u0646\u0648\u0631\u062A\u0631 \u0647\u06CC\u0628\u0631\u06CC\u062F\u061B \u062A\u0623\u06CC\u06CC\u062F \u0645\u0634\u062E\u0635\u0627\u062A \u0641\u0646\u06CC \u062F\u06CC\u062A\u0627\u0634\u06CC\u062A \u0627\u0644\u0632\u0627\u0645\u06CC \u0627\u0633\u062A.",
+    sourceVerification: {
+      source: "CCPIT \u0686\u06CC\u0646 + Kompass",
+      isVerified: true,
+      confidence: 93,
+      notes: "\u0634\u062E\u0635\u06CC\u062A \u062D\u0642\u0648\u0642\u06CC \u0634\u0641\u0627\u0641 \u0648 \u0642\u0627\u0628\u0644 \u062A\u0637\u0628\u06CC\u0642 \u0628\u0627 Trade Register \u0686\u06CC\u0646."
+    }
+  },
+  {
+    id: "SUP-0003",
+    name: "CATL (Contemporary Amperex Technology Co., Ltd)",
+    country: "\u0686\u06CC\u0646 (\u0646\u06CC\u0646\u06AF\u062F\u0647)",
+    verifiedEntity: true,
+    tier: "\u062A\u0623\u0645\u06CC\u0646\u200C\u06A9\u0646\u0646\u062F\u0647 \u0645\u0639\u062A\u0628\u0631 \u0633\u0637\u062D \u06F1 (Tier 1)",
+    score: 95,
+    mainCategories: ["\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC \u0648 \u0628\u0631\u0642", "\u0628\u0627\u062A\u0631\u06CC \u0644\u06CC\u062A\u06CC\u0648\u0645\u06CC", "\u0630\u062E\u06CC\u0631\u0647\u200C\u0633\u0627\u0632\u06CC \u0627\u0646\u0631\u0698\u06CC"],
+    entityResolutionId: "CN-91350900-MA2-CTL",
+    moq: "\u06F2\u06F0 \u062F\u0633\u062A\u06AF\u0627\u0647",
+    leadTime: "\u06F6 \u062A\u0627 \u06F8 \u0647\u0641\u062A\u0647",
+    certifications: ["ISO 9001", "UN38.3", "IEC 62619"],
+    financialStability: "\u067E\u0627\u06CC\u062F\u0627\u0631 \u0648 \u0645\u0639\u062A\u0628\u0631",
+    sanctionCheck: "\u0627\u062D\u0631\u0627\u0632 \u0647\u0648\u06CC\u062A \u0648 \u062D\u0633\u0627\u0628 \u0628\u0627\u0646\u06A9\u06CC \u067E\u0627\u06A9",
+    contactPerson: "Chen Hao (ESS Division)",
+    email: "ess@catl.com",
+    phone: "+86 593 258 8888",
+    notes: "\u0628\u0632\u0631\u06AF\u200C\u062A\u0631\u06CC\u0646 \u0633\u0627\u0632\u0646\u062F\u0647 \u0628\u0627\u062A\u0631\u06CC \u062C\u0647\u0627\u0646\u061B \u062D\u0645\u0644 \u0628\u0627\u062A\u0631\u06CC \u0644\u06CC\u062A\u06CC\u0648\u0645\u06CC \u0646\u06CC\u0627\u0632\u0645\u0646\u062F UN38.3 \u0627\u0633\u062A.",
+    sourceVerification: {
+      source: "CCPIT \u0686\u06CC\u0646 + Panjiva",
+      isVerified: true,
+      confidence: 97,
+      notes: "\u0633\u0648\u0627\u0628\u0642 \u0635\u0627\u062F\u0631\u0627\u062A \u062C\u0647\u0627\u0646\u06CC \u062A\u0637\u0628\u06CC\u0642 \u062F\u0627\u062F\u0647 \u0634\u062F\u0647 \u0627\u0633\u062A."
+    }
+  },
+  {
+    id: "SUP-0004",
+    name: "Shougang Group Co., Ltd",
+    country: "\u0686\u06CC\u0646 (\u067E\u06A9\u0646)",
+    verifiedEntity: true,
+    tier: "\u0627\u0631\u0632\u06CC\u0627\u0628\u06CC\u200C\u0634\u062F\u0647 \u0633\u0637\u062D \u06F2",
+    score: 84,
+    mainCategories: ["\u0641\u0648\u0644\u0627\u062F \u0648 \u0645\u0648\u0627\u062F \u0627\u0648\u0644\u06CC\u0647 \u0635\u0646\u0639\u062A\u06CC", "\u0648\u0631\u0642 \u06AF\u0627\u0644\u0648\u0627\u0646\u06CC\u0632\u0647", "\u06A9\u0644\u0627\u0641 \u0641\u0648\u0644\u0627\u062F\u06CC"],
+    entityResolutionId: "CN-91110000-MA0-SHG",
+    moq: "\u06F1\u06F0\u06F0 \u062A\u0646",
+    leadTime: "\u06F5 \u062A\u0627 \u06F7 \u0647\u0641\u062A\u0647",
+    certifications: ["ISO 9001", "Mill Test Certificate"],
+    financialStability: "\u067E\u0627\u06CC\u062F\u0627\u0631 \u0648 \u0645\u0639\u062A\u0628\u0631",
+    sanctionCheck: "\u0628\u0631\u0631\u0633\u06CC \u0634\u062F\u0647",
+    contactPerson: "Wang Jun (Steel Export)",
+    email: "export@shougang.com.cn",
+    phone: "+86 10 8829 3000",
+    notes: "\u062A\u0623\u06A9\u06CC\u062F \u0628\u0631 \u0627\u062E\u0630 \u06AF\u0648\u0627\u0647\u06CC \u067E\u0648\u0634\u0634 (Coating Certificate) \u0628\u0631\u0627\u06CC \u062A\u0641\u06A9\u06CC\u06A9 \u0648\u0631\u0642 \u0631\u0646\u06AF\u06CC.",
+    sourceVerification: {
+      source: "CCPIT \u0686\u06CC\u0646 + ImportYeti",
+      isVerified: true,
+      confidence: 90,
+      notes: "\u0628\u0627\u0631\u0646\u0627\u0645\u0647\u200C\u0647\u0627\u06CC \u0641\u0648\u0644\u0627\u062F\u06CC \u062A\u0637\u0628\u06CC\u0642 \u062F\u0627\u062F\u0647 \u0634\u062F\u0647\u061B \u0645\u0645\u06CC\u0632\u06CC \u06A9\u0627\u0631\u062E\u0627\u0646\u0647 \u062F\u0631 \u062D\u0627\u0644 \u0628\u0631\u0646\u0627\u0645\u0647\u200C\u0631\u06CC\u0632\u06CC."
+    }
+  },
+  {
+    id: "SUP-0005",
+    name: "Codelco (Corporaci\xF3n Nacional del Cobre)",
+    country: "\u0634\u06CC\u0644\u06CC (\u0633\u0627\u0646\u062A\u06CC\u0627\u06AF\u0648)",
+    verifiedEntity: true,
+    tier: "\u062A\u0623\u0645\u06CC\u0646\u200C\u06A9\u0646\u0646\u062F\u0647 \u0645\u0639\u062A\u0628\u0631 \u0633\u0637\u062D \u06F1 (Tier 1)",
+    score: 90,
+    mainCategories: ["\u0641\u0648\u0644\u0627\u062F \u0648 \u0645\u0648\u0627\u062F \u0627\u0648\u0644\u06CC\u0647 \u0635\u0646\u0639\u062A\u06CC", "\u06A9\u0627\u062A\u062F \u0645\u0633", "\u0645\u0633 \u062A\u0635\u0641\u06CC\u0647\u200C\u0634\u062F\u0647"],
+    entityResolutionId: "CL-90001000-COD",
+    moq: "\u06F2\u06F5 \u062A\u0646",
+    leadTime: "\u06F8 \u062A\u0627 \u06F1\u06F0 \u0647\u0641\u062A\u0647",
+    certifications: ["ISO 9001", "LME Registered Brand"],
+    financialStability: "\u067E\u0627\u06CC\u062F\u0627\u0631 \u0648 \u0645\u0639\u062A\u0628\u0631",
+    sanctionCheck: "\u0627\u062D\u0631\u0627\u0632 \u0647\u0648\u06CC\u062A \u0648 \u062D\u0633\u0627\u0628 \u0628\u0627\u0646\u06A9\u06CC \u067E\u0627\u06A9",
+    contactPerson: "Diego Morales (Commercial)",
+    email: "sales@codelco.cl",
+    phone: "+56 2 2690 3000",
+    notes: "\u0628\u0631\u0646\u062F \u062B\u0628\u062A\u200C\u0634\u062F\u0647 \u062F\u0631 \u0628\u0648\u0631\u0633 \u0641\u0644\u0632\u0627\u062A \u0644\u0646\u062F\u0646 (LME).",
+    sourceVerification: {
+      source: "Trade Register \u0634\u06CC\u0644\u06CC + Panjiva",
+      isVerified: true,
+      confidence: 94,
+      notes: "\u0646\u0647\u0627\u062F \u062F\u0648\u0644\u062A\u06CC \u0634\u06CC\u0644\u06CC\u061B \u0633\u0648\u0627\u0628\u0642 \u0635\u0627\u062F\u0631\u0627\u062A \u062A\u0637\u0628\u06CC\u0642 \u062F\u0627\u062F\u0647 \u0634\u062F\u0647 \u0627\u0633\u062A."
+    }
+  },
+  {
+    id: "SUP-0006",
+    name: "BYD Auto Co., Ltd",
+    country: "\u0686\u06CC\u0646 (\u0634\u0646\u0698\u0646)",
+    verifiedEntity: true,
+    tier: "\u062A\u0623\u0645\u06CC\u0646\u200C\u06A9\u0646\u0646\u062F\u0647 \u0645\u0639\u062A\u0628\u0631 \u0633\u0637\u062D \u06F1 (Tier 1)",
+    score: 89,
+    mainCategories: ["\u062E\u0648\u062F\u0631\u0648 \u0648 \u0645\u0627\u0634\u06CC\u0646\u200C\u0622\u0644\u0627\u062A \u0635\u0646\u0639\u062A\u06CC", "\u062E\u0648\u062F\u0631\u0648 \u0628\u0631\u0642\u06CC", "BEV"],
+    entityResolutionId: "CN-91440300-MA5-BYD",
+    moq: "\u06F4 \u062F\u0633\u062A\u06AF\u0627\u0647",
+    leadTime: "\u06F1\u06F0 \u062A\u0627 \u06F1\u06F2 \u0647\u0641\u062A\u0647",
+    certifications: ["ISO 9001", "GB/T 18384", "UN R100"],
+    financialStability: "\u067E\u0627\u06CC\u062F\u0627\u0631 \u0648 \u0645\u0639\u062A\u0628\u0631",
+    sanctionCheck: "\u0627\u062D\u0631\u0627\u0632 \u0647\u0648\u06CC\u062A \u0648 \u062D\u0633\u0627\u0628 \u0628\u0627\u0646\u06A9\u06CC \u067E\u0627\u06A9",
+    contactPerson: "Zhao Lei (Overseas Auto)",
+    email: "auto@byd.com",
+    phone: "+86 755 8988 8888",
+    notes: "\u0627\u0644\u0632\u0627\u0645 \u062A\u0637\u0628\u06CC\u0642 VIN \u0648 \u06AF\u0648\u0627\u0647\u06CC \u0642\u0648\u0627\u06CC \u0645\u062D\u0631\u06A9\u0647 \u06F1\u06F0\u06F0\u066A \u0628\u0631\u0642\u06CC \u0628\u0631\u0627\u06CC \u062A\u0639\u0631\u0641\u0647 BEV.",
+    sourceVerification: {
+      source: "CCPIT \u0686\u06CC\u0646 + ImportYeti",
+      isVerified: true,
+      confidence: 95,
+      notes: "\u0633\u0648\u0627\u0628\u0642 \u0628\u0627\u0631\u0646\u0627\u0645\u0647 \u062E\u0648\u062F\u0631\u0648 \u062A\u0637\u0628\u06CC\u0642 \u062F\u0627\u062F\u0647 \u0634\u062F\u0647 \u0627\u0633\u062A."
+    }
+  },
+  {
+    id: "SUP-0007",
+    name: "Mindray Medical International Limited",
+    country: "\u0686\u06CC\u0646 (\u0634\u0646\u0698\u0646)",
+    verifiedEntity: true,
+    tier: "\u062A\u0623\u0645\u06CC\u0646\u200C\u06A9\u0646\u0646\u062F\u0647 \u0645\u0639\u062A\u0628\u0631 \u0633\u0637\u062D \u06F1 (Tier 1)",
+    score: 93,
+    mainCategories: ["\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u067E\u0632\u0634\u06A9\u06CC \u0648 \u0622\u0632\u0645\u0627\u06CC\u0634\u06AF\u0627\u0647\u06CC", "\u0633\u0648\u0646\u0648\u06AF\u0631\u0627\u0641\u06CC", "\u062A\u0635\u0648\u06CC\u0631\u0628\u0631\u062F\u0627\u0631\u06CC \u067E\u0632\u0634\u06A9\u06CC"],
+    entityResolutionId: "CN-91440300-MA0-MRY",
+    moq: "\u06F2 \u062F\u0633\u062A\u06AF\u0627\u0647",
+    leadTime: "\u06F6 \u062A\u0627 \u06F8 \u0647\u0641\u062A\u0647",
+    certifications: ["ISO 13485", "CE Medical", "FDA 510(k)"],
+    financialStability: "\u067E\u0627\u06CC\u062F\u0627\u0631 \u0648 \u0645\u0639\u062A\u0628\u0631",
+    sanctionCheck: "\u0627\u062D\u0631\u0627\u0632 \u0647\u0648\u06CC\u062A \u0648 \u062D\u0633\u0627\u0628 \u0628\u0627\u0646\u06A9\u06CC \u067E\u0627\u06A9",
+    contactPerson: "Huang Li (ME Export)",
+    email: "intl-sales@mindray.com",
+    phone: "+86 755 8188 8000",
+    notes: "\u062A\u0623\u06CC\u06CC\u062F\u06CC\u0647 IMED \u0627\u06CC\u0631\u0627\u0646 \u0628\u0631\u0627\u06CC \u062A\u0631\u062E\u06CC\u0635 \u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u067E\u0632\u0634\u06A9\u06CC \u0627\u0644\u0632\u0627\u0645\u06CC \u0627\u0633\u062A.",
+    sourceVerification: {
+      source: "CCPIT \u0686\u06CC\u0646 + Panjiva",
+      isVerified: true,
+      confidence: 96,
+      notes: "\u0633\u0648\u0627\u0628\u0642 \u0635\u0627\u062F\u0631\u0627\u062A \u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u067E\u0632\u0634\u06A9\u06CC \u062A\u0637\u0628\u06CC\u0642 \u062F\u0627\u062F\u0647 \u0634\u062F\u0647 \u0627\u0633\u062A."
+    }
+  },
+  {
+    id: "SUP-0008",
+    name: "KRBL Limited",
+    country: "\u0647\u0646\u062F (\u062F\u0647\u0644\u06CC)",
+    verifiedEntity: true,
+    tier: "\u0627\u0631\u0632\u06CC\u0627\u0628\u06CC\u200C\u0634\u062F\u0647 \u0633\u0637\u062D \u06F2",
+    score: 87,
+    mainCategories: ["\u06A9\u0627\u0644\u0627\u0647\u0627\u06CC \u0627\u0633\u0627\u0633\u06CC \u0648 \u06A9\u0634\u0627\u0648\u0631\u0632\u06CC", "\u0628\u0631\u0646\u062C \u0628\u0627\u0633\u0645\u0627\u062A\u06CC", "\u0628\u0631\u0646\u062C \u0633\u0641\u06CC\u062F"],
+    entityResolutionId: "IN-U74999DL1992PLC-KRBL",
+    moq: "\u06CC\u06A9 \u06A9\u0627\u0646\u062A\u06CC\u0646\u0631 \u06F2\u06F0 \u0641\u0648\u062A",
+    leadTime: "\u06F3 \u062A\u0627 \u06F4 \u0647\u0641\u062A\u0647",
+    certifications: ["ISO 22000", "APEDA Registration"],
+    financialStability: "\u067E\u0627\u06CC\u062F\u0627\u0631 \u0648 \u0645\u0639\u062A\u0628\u0631",
+    sanctionCheck: "\u0628\u0631\u0631\u0633\u06CC \u0634\u062F\u0647",
+    contactPerson: "Rajiv Malhotra (Export)",
+    email: "exports@krblindia.com",
+    phone: "+91 11 4710 5000",
+    notes: "\u062A\u0623\u06A9\u06CC\u062F \u0628\u0631 \u06AF\u0648\u0627\u0647\u06CC APEDA \u0648 \u06A9\u06CC\u0641\u06CC\u062A \u06F1\u06F1\u06F2\u06F1 \u0628\u0631\u0627\u06CC \u0637\u0628\u0642\u0647\u200C\u0628\u0646\u062F\u06CC \u062A\u0639\u0631\u0641\u0647 \u0628\u0631\u0646\u062C.",
+    sourceVerification: {
+      source: "APEDA \u0647\u0646\u062F + Kompass",
+      isVerified: true,
+      confidence: 89,
+      notes: "\u062B\u0628\u062A \u0631\u0633\u0645\u06CC \u0635\u0627\u062F\u0631\u06A9\u0646\u0646\u062F\u0647 \u0628\u0631\u0646\u062C \u0647\u0646\u062F."
+    }
+  },
+  {
+    id: "SUP-0009",
+    name: "Hartalega Holdings Berhad",
+    country: "\u0645\u0627\u0644\u0632\u06CC (\u06A9\u0648\u0627\u0644\u0627\u0644\u0627\u0645\u067E\u0648\u0631)",
+    verifiedEntity: true,
+    tier: "\u062A\u0623\u0645\u06CC\u0646\u200C\u06A9\u0646\u0646\u062F\u0647 \u0645\u0639\u062A\u0628\u0631 \u0633\u0637\u062D \u06F1 (Tier 1)",
+    score: 92,
+    mainCategories: ["\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u067E\u0632\u0634\u06A9\u06CC \u0648 \u0622\u0632\u0645\u0627\u06CC\u0634\u06AF\u0627\u0647\u06CC", "\u062F\u0633\u062A\u06A9\u0634 \u0646\u06CC\u062A\u0631\u06CC\u0644", "\u0644\u0648\u0627\u0632\u0645 \u06CC\u06A9\u200C\u0628\u0627\u0631\u0645\u0635\u0631\u0641"],
+    entityResolutionId: "MY-200501014682-HRT",
+    moq: "\u06CC\u06A9 \u06A9\u0627\u0646\u062A\u06CC\u0646\u0631 \u06F4\u06F0 \u0641\u0648\u062A",
+    leadTime: "\u06F4 \u062A\u0627 \u06F6 \u0647\u0641\u062A\u0647",
+    certifications: ["ISO 13485", "CE", "FDA 510(k)", "EN 455"],
+    financialStability: "\u067E\u0627\u06CC\u062F\u0627\u0631 \u0648 \u0645\u0639\u062A\u0628\u0631",
+    sanctionCheck: "\u0627\u062D\u0631\u0627\u0632 \u0647\u0648\u06CC\u062A \u0648 \u062D\u0633\u0627\u0628 \u0628\u0627\u0646\u06A9\u06CC \u067E\u0627\u06A9",
+    contactPerson: "Tan Mei Ling (Export)",
+    email: "sales@hartalega.com.my",
+    phone: "+60 3 5886 3000",
+    notes: "\u0627\u0632 \u0628\u0632\u0631\u06AF\u200C\u062A\u0631\u06CC\u0646 \u062A\u0648\u0644\u06CC\u062F\u06A9\u0646\u0646\u062F\u06AF\u0627\u0646 \u062F\u0633\u062A\u06A9\u0634 \u0646\u06CC\u062A\u0631\u06CC\u0644 \u062C\u0647\u0627\u0646.",
+    sourceVerification: {
+      source: "Trade Register \u0645\u0627\u0644\u0632\u06CC + Panjiva",
+      isVerified: true,
+      confidence: 95,
+      notes: "\u0633\u0648\u0627\u0628\u0642 \u0635\u0627\u062F\u0631\u0627\u062A \u062A\u0637\u0628\u06CC\u0642 \u062F\u0627\u062F\u0647 \u0634\u062F\u0647 \u0627\u0633\u062A."
+    }
+  },
+  {
+    id: "SUP-0010",
+    name: "Komatsu Ltd",
+    country: "\u0698\u0627\u067E\u0646 (\u062A\u0648\u06A9\u06CC\u0648)",
+    verifiedEntity: true,
+    tier: "\u062A\u0623\u0645\u06CC\u0646\u200C\u06A9\u0646\u0646\u062F\u0647 \u0645\u0639\u062A\u0628\u0631 \u0633\u0637\u062D \u06F1 (Tier 1)",
+    score: 94,
+    mainCategories: ["\u062E\u0648\u062F\u0631\u0648 \u0648 \u0645\u0627\u0634\u06CC\u0646\u200C\u0622\u0644\u0627\u062A \u0635\u0646\u0639\u062A\u06CC", "\u0628\u06CC\u0644 \u0645\u06A9\u0627\u0646\u06CC\u06A9\u06CC", "\u0645\u0627\u0634\u06CC\u0646\u200C\u0622\u0644\u0627\u062A \u0631\u0627\u0647\u0633\u0627\u0632\u06CC"],
+    entityResolutionId: "JP-0100-01-000123-KMT",
+    moq: "\u06F1 \u062F\u0633\u062A\u06AF\u0627\u0647",
+    leadTime: "\u06F8 \u062A\u0627 \u06F1\u06F2 \u0647\u0641\u062A\u0647",
+    certifications: ["ISO 9001", "ISO 14001"],
+    financialStability: "\u067E\u0627\u06CC\u062F\u0627\u0631 \u0648 \u0645\u0639\u062A\u0628\u0631",
+    sanctionCheck: "\u0627\u062D\u0631\u0627\u0632 \u0647\u0648\u06CC\u062A \u0648 \u062D\u0633\u0627\u0628 \u0628\u0627\u0646\u06A9\u06CC \u067E\u0627\u06A9",
+    contactPerson: "Sato Kenji (Overseas Sales)",
+    email: "export@komatsu.co.jp",
+    phone: "+81 3 5561 2600",
+    notes: "\u0628\u0631\u0646\u062F \u062B\u0628\u062A\u200C\u0634\u062F\u0647 \u0648 \u0642\u0627\u0628\u0644 \u0627\u0633\u062A\u0639\u0644\u0627\u0645 \u0627\u0632 \u062F\u0641\u062A\u0631 \u0645\u0646\u0637\u0642\u0647\u200C\u0627\u06CC.",
+    sourceVerification: {
+      source: "Trade Register \u0698\u0627\u067E\u0646 + Panjiva",
+      isVerified: true,
+      confidence: 96,
+      notes: "\u0634\u062E\u0635\u06CC\u062A \u062D\u0642\u0648\u0642\u06CC \u0645\u0639\u062A\u0628\u0631 \u0648 \u0633\u0648\u0627\u0628\u0642 \u0635\u0627\u062F\u0631\u0627\u062A \u062A\u0637\u0628\u06CC\u0642 \u062F\u0627\u062F\u0647 \u0634\u062F\u0647 \u0627\u0633\u062A."
+    }
+  },
+  {
+    id: "SUP-0011",
+    name: "Soufflet Group",
+    country: "\u0641\u0631\u0627\u0646\u0633\u0647 (\u067E\u0627\u0631\u06CC\u0633)",
+    verifiedEntity: true,
+    tier: "\u0627\u0631\u0632\u06CC\u0627\u0628\u06CC\u200C\u0634\u062F\u0647 \u0633\u0637\u062D \u06F2",
+    score: 91,
+    mainCategories: ["\u06A9\u0627\u0644\u0627\u0647\u0627\u06CC \u0627\u0633\u0627\u0633\u06CC \u0648 \u06A9\u0634\u0627\u0648\u0631\u0632\u06CC", "\u06AF\u0646\u062F\u0645", "\u063A\u0644\u0627\u062A"],
+    entityResolutionId: "FR-775690000-SFL",
+    moq: "\u06F1\u06F0\u06F0\u06F0 \u062A\u0646",
+    leadTime: "\u06F2 \u062A\u0627 \u06F3 \u0647\u0641\u062A\u0647",
+    certifications: ["ISO 22000", "GAFTA"],
+    financialStability: "\u067E\u0627\u06CC\u062F\u0627\u0631 \u0648 \u0645\u0639\u062A\u0628\u0631",
+    sanctionCheck: "\u0628\u0631\u0631\u0633\u06CC \u0634\u062F\u0647",
+    contactPerson: "Pierre Dubois (Grain Trading)",
+    email: "grains@soufflet.com",
+    phone: "+33 3 25 40 51 00",
+    notes: "\u0639\u0636\u0648 GAFTA\u061B \u0627\u0633\u0646\u0627\u062F \u0641\u06CC\u062A\u0648\u0633\u0627\u0646\u06CC\u062A\u0627\u0631\u06CC \u0648 \u0645\u062C\u0648\u0632 \u062C\u0647\u0627\u062F \u06A9\u0634\u0627\u0648\u0631\u0632\u06CC \u0627\u0644\u0632\u0627\u0645\u06CC \u0627\u0633\u062A.",
+    sourceVerification: {
+      source: "Trade Register \u0641\u0631\u0627\u0646\u0633\u0647 + GAFTA",
+      isVerified: true,
+      confidence: 92,
+      notes: "\u062B\u0628\u062A \u0631\u0633\u0645\u06CC \u0648 \u0639\u0636\u0648\u06CC\u062A \u062F\u0631 \u0627\u0646\u062C\u0645\u0646 \u063A\u0644\u0627\u062A."
+    }
+  }
+];
+var PRESET_SCENARIOS = [
+  {
+    fa: "\u067E\u0646\u0644 \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC \u0645\u0648\u0646\u0648\u06A9\u0631\u06CC\u0633\u062A\u0627\u0644 \u06F5\u06F5\u06F0 \u0648\u0627\u062A",
+    en: "Monocrystalline Solar PV Module 550W TOPCon",
+    tag: "PV-550",
+    category: "\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC \u0648 \u0628\u0631\u0642",
+    samtGroup: "\u06AF\u0631\u0648\u0647 \u06F2\u06F1 (\u0627\u0648\u0644\u0648\u06CC\u062A \u0627\u0648\u0644 \u062A\u062C\u062F\u06CC\u062F\u067E\u0630\u06CC\u0631)",
+    specs: "\u062A\u0648\u0627\u0646 \u06F5\u06F5\u06F0 \u0648\u0627\u062A\u060C \u0641\u0646\u0627\u0648\u0631\u06CC N-Type TOPCon\u060C \u0628\u0627\u0632\u062F\u0647\u06CC \u06F2\u06F2.\u06F8\u066A\u060C \u06AF\u0648\u0627\u0647\u06CC T\xDCV \u0648 \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F IEC 61215",
+    qty: "\u06CC\u06A9 \u06A9\u0627\u0646\u062A\u06CC\u0646\u0631 \u06F4\u06F0 \u0641\u0648\u062A (\u06F6\u06F2\u06F0 \u0639\u062F\u062F)",
+    unit: "\u0639\u062F\u062F",
+    origin: "\u0686\u06CC\u0646 (\u0628\u0646\u062F\u0631 \u0634\u0627\u0646\u06AF\u0647\u0627\u06CC)",
+    target: "\u0646\u06CC\u0631\u0648\u06AF\u0627\u0647\u200C\u0633\u0627\u0632\u0627\u0646 \u062A\u062C\u062F\u06CC\u062F\u067E\u0630\u06CC\u0631 \u0648 \u0634\u0647\u0631\u06A9\u200C\u0647\u0627\u06CC \u0635\u0646\u0639\u062A\u06CC",
+    hsCode: "8541.43.00",
+    customsDuty: 4,
+    commercialProfit: 0,
+    vat: 10
+  },
+  {
+    fa: "\u0627\u06CC\u0646\u0648\u0631\u062A\u0631 \u0647\u06CC\u0628\u0631\u06CC\u062F \u06F5 \u06A9\u06CC\u0644\u0648\u0648\u0627\u062A \u0628\u0627 \u0634\u0627\u0631\u0698\u0631 \u0628\u0627\u062A\u0631\u06CC",
+    en: "Hybrid Solar Inverter 5kW with Battery Charger",
+    tag: "INV-5K",
+    category: "\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC \u0648 \u0628\u0631\u0642",
+    samtGroup: "\u06AF\u0631\u0648\u0647 \u06F2\u06F1 (\u0627\u0648\u0644\u0648\u06CC\u062A \u0627\u0648\u0644 \u062A\u062C\u062F\u06CC\u062F\u067E\u0630\u06CC\u0631)",
+    specs: "\u0647\u06CC\u0628\u0631\u06CC\u062F Off-Grid \u0628\u0627 \u0634\u0627\u0631\u0698\u0631 \u0628\u0627\u062A\u0631\u06CC \u062F\u0627\u062E\u0644\u06CC\u060C \u062F\u0648 MPPT \u0645\u0633\u062A\u0642\u0644\u060C \u0631\u0627\u0646\u062F\u0645\u0627\u0646 \u06F9\u06F7.\u06F5\u066A",
+    qty: "\u06F4\u06F0 \u062F\u0633\u062A\u06AF\u0627\u0647 (\u067E\u0627\u0644\u062A\u200C\u0628\u0646\u062F\u06CC \u062F\u0631\u06CC\u0627\u06CC\u06CC)",
+    unit: "\u062F\u0633\u062A\u06AF\u0627\u0647",
+    origin: "\u0686\u06CC\u0646 (\u0634\u0646\u0698\u0646)",
+    target: "\u067E\u06CC\u0645\u0627\u0646\u06A9\u0627\u0631\u0627\u0646 \u0633\u0627\u0645\u0627\u0646\u0647\u200C\u0647\u0627\u06CC \u062E\u0648\u0631\u0634\u06CC\u062F\u06CC \u062E\u0627\u0646\u06AF\u06CC \u0648 \u0635\u0646\u0639\u062A\u06CC",
+    hsCode: "8504.40.90",
+    customsDuty: 4,
+    commercialProfit: 5,
+    vat: 10
+  },
+  {
+    fa: "\u0648\u0631\u0642 \u06AF\u0627\u0644\u0648\u0627\u0646\u06CC\u0632\u0647 \u0631\u0646\u06AF\u06CC (\u067E\u06CC\u0634\u200C\u0631\u0646\u06AF) DX51D",
+    en: "Pre-painted Galvanised Steel Coil DX51D",
+    tag: "STEEL-C",
+    category: "\u0641\u0648\u0644\u0627\u062F \u0648 \u0645\u0648\u0627\u062F \u0627\u0648\u0644\u06CC\u0647 \u0635\u0646\u0639\u062A\u06CC",
+    samtGroup: "\u06AF\u0631\u0648\u0647 \u06F2\u06F2",
+    specs: "\u0639\u0631\u0636 \u06F1\u06F2\u06F5\u06F0 \u0645\u06CC\u0644\u06CC\u200C\u0645\u062A\u0631\u060C \u067E\u0648\u0634\u0634 \u067E\u0644\u06CC\u200C\u0627\u0633\u062A\u0631/PVDF\u060C \u06A9\u0644\u0627\u0641 \u06F5 \u062A\u0646\u06CC",
+    qty: "\u06F2\u06F0\u06F0 \u062A\u0646 (\u06F4 \u06A9\u0627\u0646\u062A\u06CC\u0646\u0631)",
+    unit: "\u062A\u0646",
+    origin: "\u0686\u06CC\u0646 (\u067E\u06A9\u0646)",
+    target: "\u0633\u0627\u0632\u0646\u062F\u06AF\u0627\u0646 \u0633\u0642\u0641 \u0648 \u0646\u0645\u0627 \u0648 \u0635\u0646\u0627\u06CC\u0639 \u0644\u0648\u0627\u0632\u0645 \u062E\u0627\u0646\u06AF\u06CC",
+    hsCode: "7210.70.00",
+    customsDuty: 4,
+    commercialProfit: 21,
+    vat: 10
+  },
+  {
+    fa: "\u062F\u0633\u062A\u06AF\u0627\u0647 \u0633\u0648\u0646\u0648\u06AF\u0631\u0627\u0641\u06CC \u062A\u0634\u062E\u06CC\u0635\u06CC \u062F\u0627\u067E\u0644\u0631 \u0631\u0646\u06AF\u06CC",
+    en: "Ultrasound Diagnostic System with Colour Doppler",
+    tag: "US-DOP",
+    category: "\u062A\u062C\u0647\u06CC\u0632\u0627\u062A \u067E\u0632\u0634\u06A9\u06CC \u0648 \u0622\u0632\u0645\u0627\u06CC\u0634\u06AF\u0627\u0647\u06CC",
+    samtGroup: "\u06AF\u0631\u0648\u0647 \u06F2\u06F4",
+    specs: "\u0645\u0627\u0698\u0648\u0644 \u062F\u0627\u067E\u0644\u0631 \u0631\u0646\u06AF\u06CC/\u067E\u0627\u0644\u0633\u060C \u062F\u0648 \u067E\u0631\u0648\u0628 \u0645\u062D\u062F\u0628 \u0648 \u062E\u0637\u06CC\u060C \u0645\u0627\u0646\u06CC\u062A\u0648\u0631 \u06F2\u06F1 \u0627\u06CC\u0646\u0686",
+    qty: "\u06F6 \u062F\u0633\u062A\u06AF\u0627\u0647",
+    unit: "\u062F\u0633\u062A\u06AF\u0627\u0647",
+    origin: "\u0686\u06CC\u0646 (\u0634\u0646\u0698\u0646)",
+    target: "\u0628\u06CC\u0645\u0627\u0631\u0633\u062A\u0627\u0646\u200C\u0647\u0627 \u0648 \u0645\u0631\u0627\u06A9\u0632 \u062A\u0635\u0648\u06CC\u0631\u0628\u0631\u062F\u0627\u0631\u06CC \u067E\u0632\u0634\u06A9\u06CC",
+    hsCode: "9018.12.00",
+    customsDuty: 4,
+    commercialProfit: 1,
+    vat: 0
+  },
+  {
+    fa: "\u062E\u0648\u062F\u0631\u0648\u06CC \u0628\u0631\u0642\u06CC \u0633\u062F\u0627\u0646 (BEV) \u06F6\u06F0 \u06A9\u06CC\u0644\u0648\u0648\u0627\u062A\u200C\u0633\u0627\u0639\u062A",
+    en: "Battery Electric Vehicle (BEV) 60kWh",
+    tag: "BEV-60",
+    category: "\u062E\u0648\u062F\u0631\u0648 \u0648 \u0645\u0627\u0634\u06CC\u0646\u200C\u0622\u0644\u0627\u062A \u0635\u0646\u0639\u062A\u06CC",
+    samtGroup: "\u06AF\u0631\u0648\u0647 \u06F2\u06F3",
+    specs: "\u0645\u0648\u062A\u0648\u0631 \u0627\u0644\u06A9\u062A\u0631\u06CC\u06A9\u06CC \u06F1\u06F5\u06F0 \u06A9\u06CC\u0644\u0648\u0648\u0627\u062A\u060C \u0628\u0627\u062A\u0631\u06CC \u06F6\u06F0 \u06A9\u06CC\u0644\u0648\u0648\u0627\u062A\u200C\u0633\u0627\u0639\u062A\u060C \u0628\u0631\u062F \u06F4\u06F8\u06F0 \u06A9\u06CC\u0644\u0648\u0645\u062A\u0631",
+    qty: "\u06F8 \u062F\u0633\u062A\u06AF\u0627\u0647",
+    unit: "\u062F\u0633\u062A\u06AF\u0627\u0647",
+    origin: "\u0686\u06CC\u0646 (\u0634\u0646\u0698\u0646)",
+    target: "\u0628\u0627\u0632\u0627\u0631 \u062E\u0648\u062F\u0631\u0648\u0647\u0627\u06CC \u0628\u0631\u0642\u06CC \u0648 \u0646\u0627\u0648\u06AF\u0627\u0646 \u062A\u0627\u06A9\u0633\u06CC\u0631\u0627\u0646\u06CC",
+    hsCode: "8703.80.00",
+    customsDuty: 40,
+    commercialProfit: 15,
+    vat: 10
+  },
+  {
+    fa: "\u062F\u0627\u0646\u0647 \u0642\u0647\u0648\u0647 \u0633\u0628\u0632 \u0639\u0631\u0628\u06CC\u06A9\u0627 (\u0628\u0648 \u0646\u062F\u0627\u062F\u0647)",
+    en: "Green Arabica Coffee Beans (Not Roasted)",
+    tag: "COF-GRN",
+    category: "\u06A9\u0627\u0644\u0627\u0647\u0627\u06CC \u0627\u0633\u0627\u0633\u06CC \u0648 \u06A9\u0634\u0627\u0648\u0631\u0632\u06CC",
+    samtGroup: "\u06AF\u0631\u0648\u0647 \u06F2\u06F5",
+    specs: "\u0639\u0631\u0628\u06CC\u06A9\u0627 \u06F8\u06F4 \u0627\u0633\u06A9\u0631\u06CC\u0646\u060C \u06A9\u06CC\u0633\u0647 \u06F6\u06F0 \u06A9\u06CC\u0644\u0648\u06AF\u0631\u0645\u06CC\u060C \u0631\u0637\u0648\u0628\u062A \u06F1\u06F1.\u06F5\u066A",
+    qty: "\u06F1\u06F8 \u062A\u0646 (\u06F3\u06F0\u06F0 \u06A9\u06CC\u0633\u0647)",
+    unit: "\u062A\u0646",
+    origin: "\u06A9\u0644\u0645\u0628\u06CC\u0627 (\u0647\u0648\u0626\u06CC\u0644\u0627)",
+    target: "\u0631\u0633\u062A\u0631\u06CC\u200C\u0647\u0627\u06CC \u0642\u0647\u0648\u0647 \u0648 \u0635\u0646\u0627\u06CC\u0639 \u0628\u0633\u062A\u0647\u200C\u0628\u0646\u062F\u06CC",
+    hsCode: "0901.11.00",
+    customsDuty: 4,
+    commercialProfit: 11,
+    vat: 0
+  }
+];
+
+// src/lib/costing.ts
+var safe = (n) => Number.isFinite(n) && n > 0 ? n : 0;
+function computeLandedCost(input) {
+  const qty = Math.max(1, safe(input.qty) || 1);
+  const fx = safe(input.fxRateToman);
+  const fobUsd = safe(input.fobUsd);
+  const freightUsd = safe(input.freightUsd);
+  const insuranceUsd = safe(input.insuranceUsd);
+  const cifUsdPerUnit = fobUsd + freightUsd + insuranceUsd;
+  const cifUsdTotal = cifUsdPerUnit * qty;
+  const cifTomanPerUnit = cifUsdPerUnit * fx;
+  const cifTomanTotal = cifUsdPerUnit * fx * qty;
+  const dutyTotal = cifTomanTotal * (safe(input.customsDutyPct) / 100);
+  const commercialProfitTotal = (cifTomanTotal + dutyTotal) * (safe(input.commercialProfitPct) / 100);
+  const vatBase = cifTomanTotal + dutyTotal + commercialProfitTotal;
+  const vatTotal = vatBase * (safe(input.vatPct) / 100);
+  const customsOutlay = dutyTotal + commercialProfitTotal + vatTotal;
+  const clearanceTotal = safe(input.clearanceFeeToman) * qty;
+  const inlandTotal = safe(input.inlandFreightToman) * qty;
+  const brokerTotal = safe(input.brokerAndBankToman) * qty;
+  const otherTotal = safe(input.otherFeeToman) * qty;
+  const localTotal = clearanceTotal + inlandTotal + brokerTotal + otherTotal;
+  const landedTotal = cifTomanTotal + customsOutlay + localTotal;
+  const rawLines = [
+    { key: "cif", label: "\u0627\u0631\u0632\u0634 \u06AF\u0645\u0631\u06A9\u06CC CIF (\u062E\u0631\u064A\u062F + \u062D\u0645\u0644 + \u0628\u064A\u0645\u0647)", totalToman: cifTomanTotal, perUnitToman: cifTomanPerUnit, kind: "base" },
+    { key: "duty", label: `\u062D\u0642\u0648\u0642 \u0648\u0631\u0648\u062F\u06CC \u06AF\u0645\u0631\u06A9\u06CC (${safe(input.customsDutyPct)}\u066A)`, totalToman: dutyTotal, perUnitToman: dutyTotal / qty, kind: "tariff" },
+    { key: "profit", label: `\u0633\u0648\u062F \u0628\u0627\u0632\u0631\u06AF\u0627\u0646\u06CC \u0635\u0645\u062A (${safe(input.commercialProfitPct)}\u066A)`, totalToman: commercialProfitTotal, perUnitToman: commercialProfitTotal / qty, kind: "tariff" },
+    { key: "vat", label: `\u0645\u0627\u0644\u06CC\u0627\u062A \u0628\u0631 \u0627\u0631\u0632\u0634 \u0627\u0641\u0632\u0648\u062F\u0647 (${safe(input.vatPct)}\u066A)`, totalToman: vatTotal, perUnitToman: vatTotal / qty, kind: "tax" },
+    { key: "clearance", label: "\u062A\u0631\u062E\u06CC\u0635\u200C\u06A9\u0627\u0631\u06CC\u060C \u067E\u0644\u0645\u0628 \u0648 \u062F\u0639\u0627\u0648\u06CC \u06AF\u0645\u0631\u06A9\u06CC", totalToman: clearanceTotal, perUnitToman: clearanceTotal / qty, kind: "local" },
+    { key: "inland", label: "\u062D\u0645\u0644 \u062F\u0627\u062E\u0644\u06CC (\u0628\u0646\u062F\u0631 \u2192 \u0627\u0646\u0628\u0627\u0631)", totalToman: inlandTotal, perUnitToman: inlandTotal / qty, kind: "local" },
+    { key: "broker", label: "\u06A9\u0627\u0631\u0645\u0632\u062F \u0628\u0627\u0646\u06A9/\u0635\u0631\u0627\u0641\u06CC \u0648 \u0627\u0633\u0646\u0627\u062F \u0627\u0631\u0632\u06CC", totalToman: brokerTotal, perUnitToman: brokerTotal / qty, kind: "local" },
+    { key: "other", label: "\u0628\u0627\u0632\u0631\u0633\u06CC COI\u060C \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F \u0648 \u0645\u062A\u0641\u0631\u0642\u0647", totalToman: otherTotal, perUnitToman: otherTotal / qty, kind: "local" }
+  ];
+  const lines = rawLines.map((l) => ({
+    ...l,
+    pctOfTotal: landedTotal > 0 ? Math.round(l.totalToman / landedTotal * 1e3) / 10 : 0
+  }));
+  return {
+    cifUsdTotal,
+    cifTomanTotal,
+    lines,
+    landedTotalToman: landedTotal,
+    landedPerUnitToman: landedTotal / qty,
+    landedPerUnitMillionToman: landedTotal / qty / 1e6,
+    customsOutlayToman: customsOutlay,
+    fxRateToman: fx
+  };
+}
+
+// server/db.ts
 var DATA_DIR = import_path.default.resolve(process.cwd(), "data");
 var DB_FILE = import_path.default.join(DATA_DIR, "appstore.json");
 var cache = null;
 var flushTimer = null;
 var uid = (prefix) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
-function seed() {
+var DAY_MS = 864e5;
+var isoDaysAgo = (days) => new Date(Date.now() - days * DAY_MS).toISOString();
+function defaultSettings() {
   return {
-    inventory: [],
-    suppliers: [],
-    assessments: [],
-    settings: {
-      fx: { usdNimaToman: 68e3, usdAzadToman: 92500, eurToman: 76500, updatedAt: (/* @__PURE__ */ new Date()).toISOString() },
-      vatDefaultPct: 10,
-      orgName: "\u0633\u062A\u0627\u06CC\u0634 \u062C\u0639\u0641\u0631\u06CC"
-    }
+    fx: { usdNimaToman: 68e3, usdAzadToman: 92500, eurToman: 76500, updatedAt: (/* @__PURE__ */ new Date()).toISOString() },
+    vatDefaultPct: 10,
+    orgName: "\u0633\u062A\u0627\u06CC\u0634 \u062C\u0639\u0641\u0631\u06CC"
   };
 }
+function isDemoMode() {
+  const raw = (process.env.SEED_DEMO ?? process.env.DEMO_DATA ?? "").trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+}
+function emptyState() {
+  return { inventory: [], suppliers: [], assessments: [], settings: defaultSettings(), demoSeeded: false };
+}
+function demoInventory() {
+  return INITIAL_INVENTORY.map((u, i2) => {
+    const createdAt = isoDaysAgo(60 - i2 * 3);
+    const stageEnteredAt = isoDaysAgo(Math.max(1, 24 - i2));
+    return {
+      ...u,
+      createdAt,
+      stageEnteredAt,
+      lastUpdated: "\u0647\u0645\u200C\u0627\u06A9\u0646\u0648\u0646",
+      events: [
+        {
+          id: uid("EV"),
+          at: createdAt,
+          kind: "created",
+          title: "\u062B\u0628\u062A \u067E\u0631\u0648\u0646\u062F\u0647 \u062F\u0631 \u0633\u0627\u0645\u0627\u0646\u0647",
+          detail: `\u06A9\u062F \u062A\u0639\u0631\u0641\u0647 ${u.hsCode} \u2014 ${u.customsPort}`,
+          by: "\u06A9\u0627\u0631\u0634\u0646\u0627\u0633 \u0628\u0627\u0632\u0631\u06AF\u0627\u0646\u06CC"
+        },
+        {
+          id: uid("EV"),
+          at: stageEnteredAt,
+          kind: "status_change",
+          title: u.status,
+          detail: "\u0628\u0647\u200C\u0631\u0648\u0632\u0631\u0633\u0627\u0646\u06CC \u0648\u0636\u0639\u06CC\u062A \u062F\u0631 \u06A9\u0627\u0631\u062A\u0627\u0628\u0644 \u0639\u0645\u0644\u06CC\u0627\u062A",
+          by: "\u06A9\u0627\u0631\u062A\u0627\u0628\u0644 \u0639\u0645\u0644\u06CC\u0627\u062A"
+        }
+      ]
+    };
+  });
+}
+function demoAssessments(settings) {
+  const DEMO_TAGS = ["PV-550", "INV-5K", "US-DOP", "COF-GRN"];
+  const STATUS_BY_TAG = {
+    "PV-550": "\u062A\u0623\u06CC\u06CC\u062F \u0646\u0647\u0627\u06CC\u06CC \u06A9\u0645\u06CC\u062A\u0647 \u062E\u0631\u06CC\u062F",
+    "INV-5K": "\u0622\u0645\u0627\u062F\u0647 \u062B\u0628\u062A \u0633\u0641\u0627\u0631\u0634",
+    "US-DOP": "\u062F\u0631 \u062D\u0627\u0644 \u0627\u0631\u0632\u06CC\u0627\u0628\u06CC \u0641\u0646\u06CC \u0648 \u0627\u0633\u062A\u0627\u0646\u062F\u0627\u0631\u062F",
+    "COF-GRN": "\u0622\u0645\u0627\u062F\u0647 \u062B\u0628\u062A \u0633\u0641\u0627\u0631\u0634"
+  };
+  const inventory = INITIAL_INVENTORY;
+  return PRESET_SCENARIOS.filter((sc) => DEMO_TAGS.includes(sc.tag)).map((sc, i2) => {
+    const unit = inventory.find((u) => u.name === sc.fa);
+    const qty = unit?.stockQty ?? 40;
+    const fobUsd = unit?.costPriceUsd ?? 100;
+    const fx = settings.fx.usdNimaToman;
+    const cifUsdPerUnit = fobUsd * 1.035;
+    const cifTomanPerUnit = cifUsdPerUnit * fx;
+    const landed = computeLandedCost({
+      fobUsd,
+      freightUsd: fobUsd * 0.03,
+      insuranceUsd: fobUsd * 5e-3,
+      qty,
+      fxRateToman: fx,
+      customsDutyPct: sc.customsDuty,
+      commercialProfitPct: sc.commercialProfit,
+      vatPct: sc.vat,
+      clearanceFeeToman: Math.round(cifTomanPerUnit * 35e-4),
+      inlandFreightToman: Math.round(cifTomanPerUnit * 25e-4),
+      brokerAndBankToman: Math.round(cifTomanPerUnit * 3e-3),
+      otherFeeToman: Math.round(cifTomanPerUnit * 2e-3)
+    });
+    return {
+      id: `DOSS-DEMO-${i2 + 1}`,
+      title: `${sc.fa} \u2014 ${sc.qty}`,
+      productFa: sc.fa,
+      productEn: sc.en,
+      category: sc.category,
+      specs: sc.specs,
+      qty: String(qty),
+      unit: sc.unit,
+      originPref: sc.origin,
+      targetCustomer: sc.target,
+      application: sc.target,
+      estimatedLandedCostToman: Math.round(landed.landedPerUnitMillionToman * 100) / 100,
+      suggestedHsCode: sc.hsCode,
+      samtGroup: sc.samtGroup,
+      customsDutyRate: sc.customsDuty + sc.commercialProfit,
+      vatRate: sc.vat,
+      status: STATUS_BY_TAG[sc.tag] ?? "\u0622\u0645\u0627\u062F\u0647 \u062B\u0628\u062A \u0633\u0641\u0627\u0631\u0634",
+      evidenceScore: 82 + i2 * 3,
+      createdAt: isoDaysAgo(30 - i2 * 5)
+    };
+  });
+}
+function demoState() {
+  const settings = defaultSettings();
+  return {
+    inventory: demoInventory(),
+    suppliers: INITIAL_SUPPLIERS.map((s2) => ({ ...s2 })),
+    assessments: demoAssessments(settings),
+    settings,
+    demoSeeded: true
+  };
+}
+function seed() {
+  return isDemoMode() ? demoState() : emptyState();
+}
+var isEmptyState = (d) => d.inventory.length === 0 && d.suppliers.length === 0 && d.assessments.length === 0;
 function load() {
   if (cache) return cache;
   try {
     if (import_fs.default.existsSync(DB_FILE)) {
       cache = JSON.parse(import_fs.default.readFileSync(DB_FILE, "utf-8"));
       if (!cache.settings || !Array.isArray(cache.inventory)) throw new Error("schema");
+      if (isDemoMode() && isEmptyState(cache)) {
+        cache = demoState();
+        flush(true);
+      }
+      if (!isDemoMode() && cache.demoSeeded) {
+        console.warn(
+          "[db] \u0647\u0634\u062F\u0627\u0631: \u0641\u0627\u06CC\u0644 data/appstore.json \u062D\u0627\u0648\u06CC \xAB\u062F\u0627\u062F\u0647\u200C\u06CC \u0646\u0645\u0648\u0646\u0647\u200C\u06CC \u062D\u0627\u0644\u062A \u0627\u0631\u0627\u0626\u0647\xBB \u0627\u0633\u062A \u0648\u0644\u06CC \u0633\u0631\u0648\u0631 \u0628\u062F\u0648\u0646 SEED_DEMO=1 \u0627\u062C\u0631\u0627 \u0634\u062F\u0647. \u0628\u0631\u0627\u06CC \u0634\u0631\u0648\u0639 \u0628\u0627 \u062F\u0627\u062F\u0647\u200C\u06CC \u0648\u0627\u0642\u0639\u06CC\u060C \u0641\u0627\u06CC\u0644 data/appstore.json \u0631\u0627 \u067E\u0627\u06A9 \u06A9\u0646\u06CC\u062F."
+        );
+      }
       return cache;
     }
   } catch {
@@ -46284,9 +47202,15 @@ var db = {
     flush(true);
     return d.settings;
   },
-  /** بازنشانی به داده‌های اولیه (برای دمو/توسعه) */
+  /** بازنشانی به داده‌های اولیه (برای دمو/توسعه) — در حالت ارائه، داده‌ی نمونه برمی‌گردد */
   reset() {
     cache = seed();
+    flush(true);
+    return cache;
+  },
+  /** خالی‌سازی کامل فروشگاه (فقط در حالت ارائه قابل صدا زدن است) */
+  resetToEmpty() {
+    cache = emptyState();
     flush(true);
     return cache;
   }
@@ -69434,7 +70358,7 @@ async function startServer() {
   };
   const bad = (res, status, message) => res.status(status).json({ ok: false, error: message });
   app.get("/api/health", (_req, res) => {
-    res.json({ ok: true, aiEnabled: isAiEnabled(), model: modelName(), version: "2.0.0" });
+    res.json({ ok: true, aiEnabled: isAiEnabled(), model: modelName(), version: "2.0.0", demoMode: isDemoMode() });
   });
   app.get("/api/bootstrap", wrap((_req, res) => {
     res.json({
@@ -69511,6 +70435,24 @@ async function startServer() {
     const p = req.body;
     res.json(db.patchSettings(p));
   }));
+  const demoCounts = () => ({
+    inventory: db.getInventory().length,
+    suppliers: db.getSuppliers().length,
+    assessments: db.getAssessments().length
+  });
+  app.get("/api/demo/state", wrap((_req, res) => {
+    res.json({ demoMode: isDemoMode(), counts: demoCounts() });
+  }));
+  app.post("/api/demo/seed", wrap((_req, res) => {
+    if (!isDemoMode()) return bad(res, 403, "\u062D\u0627\u0644\u062A \u0627\u0631\u0627\u0626\u0647 \u0641\u0639\u0627\u0644 \u0646\u06CC\u0633\u062A\u061B \u0633\u0631\u0648\u0631 \u0631\u0627 \u0628\u0627 SEED_DEMO=1 \u0627\u062C\u0631\u0627 \u06A9\u0646\u06CC\u062F.");
+    db.reset();
+    res.json({ ok: true, demoMode: true, counts: demoCounts() });
+  }));
+  app.post("/api/demo/clear", wrap((_req, res) => {
+    if (!isDemoMode()) return bad(res, 403, "\u062D\u0627\u0644\u062A \u0627\u0631\u0627\u0626\u0647 \u0641\u0639\u0627\u0644 \u0646\u06CC\u0633\u062A\u061B \u0633\u0631\u0648\u0631 \u0631\u0627 \u0628\u0627 SEED_DEMO=1 \u0627\u062C\u0631\u0627 \u06A9\u0646\u06CC\u062F.");
+    db.resetToEmpty();
+    res.json({ ok: true, demoMode: true, counts: demoCounts() });
+  }));
   app.post("/api/ai/hs-suggest", wrap(async (req, res) => {
     const { productName, description, category } = req.body ?? {};
     if (!productName || typeof productName !== "string") return bad(res, 400, "\u0646\u0627\u0645 \u06A9\u0627\u0644\u0627 \u0628\u0631\u0627\u06CC \u067E\u06CC\u0634\u0646\u0647\u0627\u062F \u062A\u0639\u0631\u0641\u0647 \u0627\u0644\u0632\u0627\u0645\u06CC \u0627\u0633\u062A.");
@@ -69541,6 +70483,10 @@ async function startServer() {
   });
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`\u{1F680} \u0633\u0631\u0648\u0631 \u062A\u062C\u0627\u0631\u062A\u200C\u06CC\u0627\u0631 \u0631\u0648\u06CC http://0.0.0.0:${PORT} \u0622\u0645\u0627\u062F\u0647 \u0627\u0633\u062A. \u0648\u0636\u0639\u06CC\u062A \u0647\u0648\u0634 \u0645\u0635\u0646\u0648\u0639\u06CC: ${isAiEnabled() ? `\u0641\u0639\u0627\u0644 (${modelName()})` : "\u063A\u06CC\u0631\u0641\u0639\u0627\u0644 (\u0645\u0648\u062A\u0648\u0631 \u0645\u062D\u0644\u06CC \u0641\u0639\u0627\u0644 \u0627\u0633\u062A)"}`);
+    if (isDemoMode()) {
+      const c = { inventory: db.getInventory().length, suppliers: db.getSuppliers().length, assessments: db.getAssessments().length };
+      console.log(`\u{1F3AC} \u062D\u0627\u0644\u062A \u0627\u0631\u0627\u0626\u0647 (SEED_DEMO=1) \u0641\u0639\u0627\u0644 \u0627\u0633\u062A \u2014 \u062F\u0627\u062F\u0647\u200C\u06CC \u0646\u0645\u0648\u0646\u0647: ${c.inventory} \u067E\u0631\u0648\u0646\u062F\u0647\u060C ${c.suppliers} \u062A\u0623\u0645\u06CC\u0646\u200C\u06A9\u0646\u0646\u062F\u0647\u060C ${c.assessments} \u0627\u0631\u0632\u06CC\u0627\u0628\u06CC.`);
+    }
   });
 }
 startServer();
