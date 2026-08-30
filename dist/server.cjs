@@ -69415,7 +69415,7 @@ async function supplierCheck(req) {
 // server.ts
 async function startServer() {
   const app = (0, import_express.default)();
-  const PORT = 3e3;
+  const PORT = Number(process.env.PORT) || 3e3;
   app.use(import_express.default.json({ limit: "2mb" }));
   app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");

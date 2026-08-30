@@ -1,0 +1,16 @@
+# Render Blueprint — استقرار یک‌کلیکی تجارت‌یار
+# https://render.com/deploy?repo=https://github.com/Setayesh-Jafari/Tejaratyarr
+services:
+  - type: web
+    name: tejaratyarr
+    runtime: node
+    plan: free
+    buildCommand: npm install --no-audit --no-fund && npm run build
+    startCommand: NODE_ENV=production node dist/server.cjs
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
