@@ -1,0 +1,13 @@
+{
+  "name": "Tejaratyarr",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Tejaratyarr",
+      "onAutoForward": "openPreview",
+      "visibility": "public"
+    }
+  },
+  "postCreateCommand": "npm install --no-audit --no-fund && npm run build"
+}
