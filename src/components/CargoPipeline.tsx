@@ -141,7 +141,7 @@ export const CargoPipeline: React.FC = () => {
                                 <select
                                   value={u.status}
                                   onChange={(e) => updateUnitStatus(u.id, e.target.value as ItemStatus)}
-                                  className="flex-1 text-[10px] font-bold bg-white border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-blue-400 focus:outline-none cursor-pointer"
+                                  className="flex-1 text-[10px] font-bold bg-white border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-indigo-400 focus:outline-none cursor-pointer"
                                 >
                                   {ALL_STATUSES.map((s) => (
                                     <option key={s} value={s}>{s}</option>
@@ -165,7 +165,7 @@ export const CargoPipeline: React.FC = () => {
                                   value={noteText}
                                   onChange={(e) => setNoteText(e.target.value)}
                                   placeholder="یادداشت عملیاتی (مثلاً: هماهنگی با ترخیص‌کار انجام شد)…"
-                                  className="flex-1 text-[10px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:bg-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                  className="flex-1 text-[10px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:bg-white focus:ring-2 focus:ring-indigo-400 focus:outline-none"
                                 />
                                 <button
                                   type="submit"
@@ -206,7 +206,7 @@ export const CargoPipeline: React.FC = () => {
                           <button
                             onClick={() => move(u, 1)}
                             disabled={u.status === 'موجود در انبار (ترخیص شده)' || u.status === 'رزرو مشتری / پیش‌فروش'}
-                            className="flex-1 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg py-1.5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
+                            className="flex-1 text-[10px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg py-1.5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
                           >
                             مرحله بعد <ArrowLeft className="w-3 h-3" />
                           </button>

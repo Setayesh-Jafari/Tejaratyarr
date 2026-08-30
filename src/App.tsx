@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import {
-  Boxes, Workflow, Scale, Sparkles, FileCheck2, Globe2, Send, BarChart3, Database,
-} from 'lucide-react';
+import { FileCheck2 } from 'lucide-react';
 import { ActiveView, isSettledStatus } from './types';
 import { HS_DISPUTE_SCENARIOS } from './data/hscodeScenarios';
 import { AppStoreProvider, useStore } from './store/AppStore';
 import { ToastHost, ViewSkeleton, FatalError } from './components/ui/Feedback';
-import { PageHero } from './components/ui/Chrome';
+import { PageHeader } from './components/ui/Chrome';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { MetricsOverview } from './components/MetricsOverview';
+import { OverviewDashboard } from './components/OverviewDashboard';
 import { InventoryTable } from './components/InventoryTable';
 import { PerformanceSection } from './components/PerformanceSection';
 import { SupplierEvaluation } from './components/SupplierEvaluation';
@@ -34,7 +33,7 @@ const Workspace: React.FC = () => {
     addUnit, updateUnitStatus, patchUnit, saveAssessment,
   } = useStore();
 
-  const [activeView, setActiveView] = useState<ActiveView>('inventory');
+  const [activeView, setActiveView] = useState<ActiveView>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -78,13 +77,13 @@ const Workspace: React.FC = () => {
 
   const heroFor = (view: ActiveView) => {
     switch (view) {
+      case 'overview':
+        return null;
       case 'inventory':
         return (
-          <PageHero
-            icon={<Boxes className="w-5 h-5" />}
-            eyebrow="کارتابل عملیات"
-            title="مدیریت کارگو و موجودی انبار"
-            subtitle="پرونده‌های وارداتی، وضعیت ترخیص، ارزش‌گذاری سبد و خروجی CSV — همگی متصل به سرور و ذخیره‌شده."
+          <PageHeader
+            title="کارتابل کارگو و موجودی"
+            description="پرونده‌های وارداتی، وضعیت ترخیص و ارزش‌گذاری سبد — متصل به سرور و ذخیره‌شده."
             stats={[
               { label: 'پرونده فعال', value: activeShipments.toLocaleString('fa-IR'), tone: 'text-indigo-600' },
               { label: 'در گمرک', value: customsCount.toLocaleString('fa-IR'), tone: 'text-amber-600' },
@@ -94,11 +93,9 @@ const Workspace: React.FC = () => {
         );
       case 'pipeline':
         return (
-          <PageHero
-            icon={<Workflow className="w-5 h-5" />}
-            eyebrow="چرخه عمر پرونده"
-            title="گردش کار واردات — از ثبت سفارش تا انبار"
-            subtitle="کارت‌ها را بین مراحل جابه‌جا کنید؛ هر حرکت در تایم‌لاین پرونده ثبت و روی سرور ذخیره می‌شود."
+          <PageHeader
+            title="گردش کار پرونده‌ها"
+            description="کارت‌ها را بین مراحل جابه‌جا کنید؛ هر حرکت در تایم‌لاین پرونده ثبت و روی سرور ذخیره می‌شود."
             stats={[
               { label: 'در گمرک', value: customsCount.toLocaleString('fa-IR'), tone: 'text-amber-600' },
               { label: 'در جریان', value: activeShipments.toLocaleString('fa-IR'), tone: 'text-indigo-600' },
@@ -107,66 +104,52 @@ const Workspace: React.FC = () => {
         );
       case 'hscode_resolver':
         return (
-          <PageHero
-            icon={<Scale className="w-5 h-5" />}
-            eyebrow="تعرفه گمرکی"
-            title="تفکیک هوشمند کد تعرفه (HS Code)"
-            subtitle="پیشنهاد هوشمند + دایرکتوری رسمی تعرفه‌ها با حقوق ورودی، سود بازرگانی، مجوزها و شناسنامه استنادی هر کد."
+          <PageHeader
+            title="تفکیک تعرفه (HS Code)"
+            description="پیشنهاد هوشمند + دایرکتوری تعرفه‌ها با حقوق ورودی، سود بازرگانی، مجوزها و شناسنامه استنادی هر کد."
           />
         );
       case 'intelligence':
         return (
-          <PageHero
-            icon={<Sparkles className="w-5 h-5" />}
-            eyebrow="هوش تجاری"
-            title="کاوشگر اسناد و موتورهای استنادی تجارت"
-            subtitle="نتایج ساختاریافته از منابع بین‌المللی با وضعیت راستی‌آزمایی و امتیاز اطمینان."
+          <PageHeader
+            title="کاوشگر هوش تجاری"
+            description="نتایج ساختاریافته از منابع بین‌المللی با وضعیت راستی‌آزمایی و امتیاز اطمینان."
           />
         );
       case 'assessment':
         return (
-          <PageHero
-            icon={<FileCheck2 className="w-5 h-5" />}
-            eyebrow="ویزارد ۴ مرحله‌ای"
-            title="ارزیابی جامع امکان‌سنجی واردات"
-            subtitle="تعرفه، تأمین‌کننده، بهای تمام‌شده و حاشیه سود — با موتور محاسباتی رسمی و آرشیو پرونده."
+          <PageHeader
+            title="ارزیابی جامع واردات"
+            description="تعرفه، تأمین‌کننده، بهای تمام‌شده و حاشیه سود — با موتور محاسباتی و آرشیو پرونده."
           />
         );
       case 'sourcing':
         return (
-          <PageHero
-            icon={<Globe2 className="w-5 h-5" />}
-            eyebrow="Due Diligence"
-            title="اعتبارسنجی تأمین‌کنندگان خارجی"
-            subtitle={`ماتریس ممیزی ${suppliers.length.toLocaleString('fa-IR')} تأمین‌کننده + تحلیل هوشمند ریسک واسطه‌ها و تحریم‌ها.`}
+          <PageHeader
+            title="اعتبارسنجی تأمین‌کنندگان"
+            description={`ماتریس ممیزی ${suppliers.length.toLocaleString('fa-IR')} تأمین‌کننده + تحلیل ریسک واسطه‌ها و تحریم‌ها.`}
           />
         );
       case 'rfq':
         return (
-          <PageHero
-            icon={<Send className="w-5 h-5" />}
-            eyebrow="مکاتبات خرید"
-            title="صدور استعلام قیمت بین‌المللی (RFQ)"
-            subtitle="پیش‌نویس رسمی پروفرما با اینکوترمز ۲۰۲۰، شرایط پرداخت امن و گواهی‌های الزامی."
+          <PageHeader
+            title="استعلام قیمت (RFQ)"
+            description="پیش‌نویس رسمی پروفرما با اینکوترمز ۲۰۲۰، شرایط پرداخت امن و گواهی‌های الزامی."
           />
         );
       case 'analytics':
         return (
-          <PageHero
-            icon={<BarChart3 className="w-5 h-5" />}
-            eyebrow="تحلیل و مالی"
-            title="داشبورد تحلیلی سبد وارداتی"
-            subtitle="نمودارهای زنده از داده واقعی کارتابل + موتور بهای تمام‌شده و تنظیمات نرخ ارز."
+          <PageHeader
+            title="داشبورد تحلیلی و مالی"
+            description="نمودارهای زنده از داده واقعی کارتابل + موتور بهای تمام‌شده و تنظیمات نرخ ارز."
             stats={[{ label: 'ارزش سبد', value: `${fmtBillion(portfolioValue)} میلیارد ت`, tone: 'text-emerald-600' }]}
           />
         );
       case 'provenance':
         return (
-          <PageHero
-            icon={<Database className="w-5 h-5" />}
-            eyebrow="شفافیت داده"
-            title="شناسنامه منابع داده و استنادهای رسمی"
-            subtitle="مرجع هر داده، متدولوژی محاسبات و تاریخ بازبینی کدهای تعرفه."
+          <PageHeader
+            title="شناسنامه منابع داده"
+            description="مرجع هر داده، متدولوژی محاسبات و تاریخ بازبینی کدهای تعرفه."
           />
         );
       default:
@@ -175,8 +158,8 @@ const Workspace: React.FC = () => {
   };
 
   return (
-    <div dir="rtl" className="flex h-screen w-screen overflow-hidden tj-canvas font-sans antialiased text-slate-900 select-none">
-      {/* سایدبار تیره — سمت راست در RTL */}
+    <div dir="rtl" className="flex h-screen w-screen overflow-hidden tj-canvas font-sans antialiased text-slate-900">
+      {/* سایدبار — سمت راست در RTL */}
       <Sidebar
         activeView={activeView}
         setActiveView={setActiveView}
@@ -212,6 +195,15 @@ const Workspace: React.FC = () => {
                 className="flex-1 flex flex-col min-h-0 gap-3.5"
               >
                 {heroFor(activeView)}
+
+                {activeView === 'overview' && (
+                  <OverviewDashboard
+                    onNavigate={setActiveView}
+                    onOpenUnit={(unit) => setSelectedUnit(unit)}
+                    onOpenAssessment={() => setIsAssessmentOpen(true)}
+                    onOpenAddUnit={() => setIsAddUnitOpen(true)}
+                  />
+                )}
 
                 {activeView === 'inventory' && (
                   <>
@@ -266,11 +258,11 @@ const Workspace: React.FC = () => {
 
                 {activeView === 'assessment' && (
                   <div className="flex-1 tj-card flex flex-col items-center justify-center p-10 text-center space-y-4">
-                    <div className="tj-grad tj-grad-ring w-16 h-16 rounded-3xl flex items-center justify-center text-white shadow-lg">
-                      <FileCheck2 className="w-7 h-7" />
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                      <FileCheck2 className="w-6 h-6" />
                     </div>
                     <div className="max-w-md space-y-1.5">
-                      <h3 className="text-base font-black text-slate-800">سامانه ارزیابی جامع واردات و ترخیص (۴ مرحله‌ای)</h3>
+                      <h3 className="text-base font-bold text-slate-800">ارزیابی جامع واردات و ترخیص (۴ مرحله‌ای)</h3>
                       <p className="text-xs text-slate-500 leading-relaxed">
                         مشخصات کالا ← تفکیک تعرفه ← اعتبارسنجی تأمین‌کننده ← محاسبه بهای تمام‌شده و ثبت در کارتابل.
                       </p>

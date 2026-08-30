@@ -87,27 +87,27 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({
     setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
 
   const inputCls =
-    'w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none';
+    'w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none';
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-2xl rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="bg-[#0F172A] text-white px-6 py-4 flex items-center justify-between border-b border-slate-800 flex-shrink-0">
+        <div className="bg-white px-6 py-4 flex items-center justify-between border-b border-slate-200 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold tracking-tight">{unit.name}</h3>
-              <p className="text-[11px] text-slate-400 font-mono">
+              <h3 className="text-sm font-bold text-slate-900 tracking-tight">{unit.name}</h3>
+              <p className="text-[11px] text-slate-500 font-mono">
                 شناسه: {unit.vinOrCode} • کد تعرفه: {unit.hsCode} • ثبت سفارش: {unit.orderRegCode}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -196,7 +196,7 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({
                 <button
                   onClick={saveEdit}
                   disabled={saving || !draft!.name.trim()}
-                  className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors"
+                  className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {saving ? 'در حال ذخیره…' : 'ذخیره تغییرات'}
@@ -321,7 +321,7 @@ export const UnitDetailModal: React.FC<UnitDetailModalProps> = ({
                       onClick={() => onUpdateStatus(unit.id, st)}
                       className={`text-xs px-3 py-1.5 rounded-xl border font-bold transition-all ${
                         unit.status === st
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
                           : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                       }`}
                     >

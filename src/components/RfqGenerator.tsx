@@ -103,7 +103,7 @@ Email: sourcing@your-company.com`;
           </button>
           <button
             onClick={handleDownload}
-            className="flex items-center gap-1.5 text-xs px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-xs transition-colors"
+            className="flex items-center gap-1.5 text-xs px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-xs transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             <span>دانلود فایل متنی</span>
@@ -120,7 +120,7 @@ Email: sourcing@your-company.com`;
             <select
               value={selectedSupplierId}
               onChange={(e) => setSelectedSupplierId(e.target.value)}
-              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-semibold"
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold"
             >
               {suppliers.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -136,7 +136,7 @@ Email: sourcing@your-company.com`;
               type="text"
               value={productTitle}
               onChange={(e) => setProductTitle(e.target.value)}
-              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-left"
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-left"
               dir="ltr"
             />
           </div>
@@ -147,7 +147,7 @@ Email: sourcing@your-company.com`;
               rows={3}
               value={targetTargetSpecs}
               onChange={(e) => setTargetSpecs(e.target.value)}
-              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-left leading-relaxed"
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-left leading-relaxed"
               dir="ltr"
             />
           </div>
@@ -158,7 +158,7 @@ Email: sourcing@your-company.com`;
               type="text"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-left"
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-left"
               dir="ltr"
             />
           </div>
@@ -169,7 +169,7 @@ Email: sourcing@your-company.com`;
               type="text"
               value={incoterms}
               onChange={(e) => setIncoterms(e.target.value)}
-              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-left"
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-left"
               dir="ltr"
             />
           </div>

@@ -92,43 +92,44 @@ export const DataProvenanceView: React.FC = () => {
         </div>
       </div>
 
-      {/* Answer Spotlight Box */}
-      <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-xl p-6 border border-indigo-700 shadow-md">
-        <div className="flex items-start gap-4">
-          <div className="p-3 bg-indigo-500/20 border border-indigo-400/30 rounded-xl text-indigo-300 shrink-0">
-            <Sparkles className="w-6 h-6" />
+      {/* مبنای مرجع هر بخش */}
+      <div className="tj-card p-5">
+        <div className="flex items-start gap-3.5">
+          <div className="p-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 shrink-0">
+            <Sparkles className="w-5 h-5" />
           </div>
-          <div className="space-y-3">
-            <h2 className="text-base font-bold text-indigo-200">
-              مبنای مرجع هر بخش سامانه (توجه: بدون اتصال زنده به سامانه‌های دولتی)
+          <div className="space-y-3 flex-1 min-w-0">
+            <h2 className="text-sm font-bold text-slate-900">
+              مبنای مرجع هر بخش سامانه
+              <span className="text-slate-400 font-medium text-[11px] mr-1.5">(بدون اتصال زنده به سامانه‌های دولتی)</span>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-              <div className="bg-slate-800/80 border border-slate-700 p-3.5 rounded-lg">
-                <div className="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
+              <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
+                <div className="font-bold text-amber-700 mb-1 flex items-center gap-1.5">
                   <Building2 className="w-4 h-4" />
                   <span>۱. موجودی انبار و وضعیت ترخیص کارگوها:</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed">
+                <p className="text-slate-600 leading-relaxed">
                   ساختار داده از <strong>سامانه جامع انبارها و مراکز نگهداری کالا (NTSW)</strong> و قبوض انبار مناطق ویژه الگوبرداری شده است؛ در نسخه فعلی مقادیر به‌صورت نمونه ثبت می‌شوند.
                 </p>
               </div>
 
-              <div className="bg-slate-800/80 border border-slate-700 p-3.5 rounded-lg">
-                <div className="font-bold text-blue-300 mb-1 flex items-center gap-1.5">
+              <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
+                <div className="font-bold text-indigo-700 mb-1 flex items-center gap-1.5">
                   <TrendingUp className="w-4 h-4" />
                   <span>۲. روند حجم واردات و سهم بازار:</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed">
+                <p className="text-slate-600 leading-relaxed">
                   بر اساس ساختار <strong>سالنامه آمار تجارت خارجی گمرک ایران (IRICA)</strong> و <strong>ITC Trade Map (WTO/UNCTAD)</strong>؛ اعداد نمایشی فعلی نمونه هستند و به‌صورت زنده استعلام نمی‌شوند.
                 </p>
               </div>
 
-              <div className="bg-slate-800/80 border border-slate-700 p-3.5 rounded-lg">
-                <div className="font-bold text-emerald-300 mb-1 flex items-center gap-1.5">
+              <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
+                <div className="font-bold text-emerald-700 mb-1 flex items-center gap-1.5">
                   <Ship className="w-4 h-4" />
                   <span>۳. بارنامه‌ها و تحویل دریایی:</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed">
+                <p className="text-slate-600 leading-relaxed">
                   بر اساس ساختار <strong>مانیفست‌های بارنامه ImportYeti</strong> و خطوط کشتیرانی؛ در نسخه فعلی داده‌ی حمل‌ونقل نمونه است و رهگیری زنده کانتینر وجود ندارد.
                 </p>
               </div>
@@ -154,7 +155,7 @@ export const DataProvenanceView: React.FC = () => {
                 onClick={() => setSelectedSourceId(src.id)}
                 className={`w-full p-3 rounded-xl border text-right transition-all flex items-start justify-between gap-3 ${
                   isSelected
-                    ? 'border-blue-600 bg-blue-50 text-blue-950 shadow-sm ring-1 ring-blue-600'
+                    ? 'border-indigo-600 bg-blue-50 text-blue-950 shadow-sm ring-1 ring-indigo-600'
                     : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 text-slate-700'
                 }`}
               >

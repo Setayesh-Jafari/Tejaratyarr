@@ -105,23 +105,23 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({ isOpen, on
     }
   };
 
-  const fieldCls = 'w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none';
+  const fieldCls = 'w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none';
   const labelCls = 'text-[10px] font-bold text-slate-500';
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-2xl rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-        <div className="bg-[#0F172A] text-white px-6 py-4 flex items-center justify-between border-b border-slate-800 flex-shrink-0">
+        <div className="bg-white px-6 py-4 flex items-center justify-between border-b border-slate-200 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold tracking-tight">{initial ? 'ویرایش تأمین‌کننده' : 'افزودن تأمین‌کننده خارجی'}</h3>
-              <p className="text-[11px] text-slate-400">ثبت سوابق ممیزی و مشخصات حقوقی — مبنای ماتریس اعتبارسنجی</p>
+              <h3 className="text-sm font-bold text-slate-900 tracking-tight">{initial ? 'ویرایش تأمین‌کننده' : 'افزودن تأمین‌کننده خارجی'}</h3>
+              <p className="text-[11px] text-slate-500">ثبت سوابق ممیزی و مشخصات حقوقی — مبنای ماتریس اعتبارسنجی</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors">
+          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>

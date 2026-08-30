@@ -209,7 +209,7 @@ export interface StageLog {
   status: 'ok' | 'info' | 'warn' | 'active';
 }
 
-export type ActiveView = 'inventory' | 'intelligence' | 'hscode_resolver' | 'sourcing' | 'assessment' | 'rfq' | 'provenance' | 'analytics' | 'pipeline';
+export type ActiveView = 'overview' | 'inventory' | 'intelligence' | 'hscode_resolver' | 'sourcing' | 'assessment' | 'rfq' | 'provenance' | 'analytics' | 'pipeline';
 
 /* ---------- توسعه ۱۴۰۵: گردش کار، بهای تمام‌شده، هوش مصنوعی ---------- */
 

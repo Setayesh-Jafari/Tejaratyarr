@@ -112,20 +112,20 @@ export const FinancialLedger: React.FC<FinancialLedgerProps> = ({ inventory }) =
             )}
           </tbody>
           {rows.length > 0 && (
-            <tfoot className="bg-slate-900 text-white">
+            <tfoot className="bg-slate-50 border-t-2 border-slate-200 text-slate-900">
               <tr>
                 <td className="px-4 py-3 font-bold">جمع کل سبد</td>
                 <td className="px-4 py-3 font-mono">{inventory.reduce((s, u) => s + u.stockQty, 0).toLocaleString('fa-IR')} واحد</td>
-                <td className="px-4 py-3 font-mono font-black" dir="ltr">{fmtBillion(totals.cost)} میلیارد ت</td>
-                <td className="px-4 py-3 font-mono font-black text-blue-400" dir="ltr">{fmtBillion(totals.market)} میلیارد ت</td>
-                <td className="px-4 py-3 text-[10px] text-amber-300 font-mono" colSpan={2} dir="rtl">
+                <td className="px-4 py-3 font-mono font-bold" dir="ltr">{fmtBillion(totals.cost)} میلیارد ت</td>
+                <td className="px-4 py-3 font-mono font-bold text-indigo-600" dir="ltr">{fmtBillion(totals.market)} میلیارد ت</td>
+                <td className="px-4 py-3 text-[10px] text-amber-600 font-semibold" colSpan={2} dir="rtl">
                   رسوب در گمرک: {fmtBillion(stuckInCustoms)} میلیارد ت
                 </td>
               </tr>
-              <tr className="bg-slate-800/60">
-                <td className="px-4 py-3 text-[10px] text-slate-400" colSpan={6} dir="rtl">
+              <tr>
+                <td className="px-4 py-3 text-[10px] text-slate-500" colSpan={6} dir="rtl">
                   حساسیت نرخ ارز: هر ۱۰۰۰ تومان افزایش نرخ نیما ≈{' '}
-                  <span className="font-bold text-blue-300">{fmtBillion(fxSensitivityMillion)} میلیارد ت</span>{' '}
+                  <span className="font-bold text-indigo-600">{fmtBillion(fxSensitivityMillion)} میلیارد ت</span>{' '}
                   به بهای تمام‌شده‌ی سبد می‌افزاید (تخمینی بر اساس دایرکتوری HS داخلی).
                 </td>
               </tr>

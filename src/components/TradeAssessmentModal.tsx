@@ -47,18 +47,18 @@ export const TradeAssessmentModal: React.FC<TradeAssessmentModalProps> = ({
     ? enrichScenarioCode(initialScenario.competingCodes.find((c) => c.isRecommended) ?? initialScenario.competingCodes[0])
     : undefined;
 
-  // Form State
-  const [productFa, setProductFa] = useState(initialScenario?.productNameFa || 'پنل خورشیدی مونوکریستال ۵۵۰ وات');
-  const [productEn, setProductEn] = useState(initialScenario?.productNameEn || 'Monocrystalline Solar PV Module 550W');
+  // Form State — شروع خنثی و صادقانه؛ کاربر خودش مشخصات کالای واقعی را وارد می‌کند
+  const [productFa, setProductFa] = useState(initialScenario?.productNameFa || '');
+  const [productEn, setProductEn] = useState(initialScenario?.productNameEn || '');
   const [category, setCategory] = useState<any>(initialScenario?.category || 'تجهیزات خورشیدی و برق');
-  const [selectedHsCode, setSelectedHsCode] = useState<string>(recommendedCode?.code || '8541.43.00');
-  const [samtGroup, setSamtGroup] = useState(recommendedCode?.samtGroup || 'گروه ۲۱ (اولویت اول تجدیدپذیر)');
-  const [specs, setSpecs] = useState('توان ۵۵۰ وات، فناوری N-Type TOPCon، بازدهی ۲۲.۸٪، گواهینامه TÜV و استاندارد IEC 61215');
-  const [qty, setQty] = useState('یک کانتینر ۴۰ فوت های‌کیوب (۶۲۰ عدد)');
+  const [selectedHsCode, setSelectedHsCode] = useState<string>(recommendedCode?.code || '');
+  const [samtGroup, setSamtGroup] = useState(recommendedCode?.samtGroup || '');
+  const [specs, setSpecs] = useState('');
+  const [qty, setQty] = useState('');
   const [unit, setUnit] = useState('عدد');
-  const [originPref, setOriginPref] = useState('چین (بندر شانگهای)');
-  const [customsPort, setCustomsPort] = useState('گمرک شهید رجایی بندرعباس');
-  const [targetCustomer, setTargetCustomer] = useState('نیروگاه‌سازان تجدیدپذیر و شهرک‌های صنعتی');
+  const [originPref, setOriginPref] = useState('');
+  const [customsPort, setCustomsPort] = useState('');
+  const [targetCustomer, setTargetCustomer] = useState('');
 
   // تأمین‌کننده و اعتبارسنجی (Due Diligence) — جایگزین داده‌های ساختگی قبلی
   const [supplierName, setSupplierName] = useState('');
@@ -279,23 +279,23 @@ TejaratYar Commercial Platform (Iran)`;
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-4xl rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Top Header */}
-        <div className="bg-[#0F172A] text-white px-6 py-4 flex items-center justify-between border-b border-slate-800 flex-shrink-0">
+        <div className="bg-white px-6 py-4 flex items-center justify-between border-b border-slate-200 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold tracking-tight">
+              <h3 className="text-sm font-bold text-slate-900 tracking-tight">
                 موتور ارزیابی امکان‌سنجی واردات و ممیزی تأمین‌کننده (تجارت‌یار)
               </h3>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500">
                 بررسی شواهدمحور، مجوزهای صمت و استاندارد، محاسبه بهای تمام‌شده و بسته صدور RFQ
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -317,7 +317,7 @@ TejaratYar Commercial Platform (Iran)`;
             >
               <div className="flex items-center gap-2">
                 <span className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-bold font-mono ${
-                  currentStep === idx ? 'bg-blue-600 text-white' : currentStep > idx ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600'
+                  currentStep === idx ? 'bg-indigo-600 text-white' : currentStep > idx ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600'
                 }`}>
                   {idx + 1}
                 </span>
@@ -342,7 +342,7 @@ TejaratYar Commercial Platform (Iran)`;
                   onClick={() => loadScenario(sc)}
                   className={`text-xs px-3 py-1.5 rounded-xl border font-bold transition-all ${
                     productEn === sc.en
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                   }`}
                 >
@@ -362,7 +362,8 @@ TejaratYar Commercial Platform (Iran)`;
                     type="text"
                     value={productFa}
                     onChange={(e) => setProductFa(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="مثلاً پنل خورشیدی مونوکریستال ۵۵۰ وات"
+                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -371,7 +372,9 @@ TejaratYar Commercial Platform (Iran)`;
                     type="text"
                     value={productEn}
                     onChange={(e) => setProductEn(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                    placeholder="Monocrystalline Solar PV Module 550W"
+                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono"
+                    dir="ltr"
                   />
                 </div>
               </div>
@@ -382,7 +385,8 @@ TejaratYar Commercial Platform (Iran)`;
                   rows={2}
                   value={specs}
                   onChange={(e) => setSpecs(e.target.value)}
-                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none leading-relaxed"
+                  placeholder="توان، فناوری، بازدهی و گواهی‌های استاندارد کالای موردنظر"
+                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none leading-relaxed"
                 />
               </div>
 
@@ -393,7 +397,7 @@ TejaratYar Commercial Platform (Iran)`;
                     type="text"
                     value={qty}
                     onChange={(e) => setQty(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -403,7 +407,7 @@ TejaratYar Commercial Platform (Iran)`;
                     min={1}
                     value={qtyNumber}
                     onChange={(e) => setQtyNumber(Math.max(1, Number(e.target.value) || 1))}
-                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono"
                     dir="ltr"
                   />
                 </div>
@@ -413,7 +417,7 @@ TejaratYar Commercial Platform (Iran)`;
                     type="text"
                     value={unit}
                     onChange={(e) => setUnit(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -422,7 +426,7 @@ TejaratYar Commercial Platform (Iran)`;
                     type="text"
                     value={originPref}
                     onChange={(e) => setOriginPref(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -509,7 +513,7 @@ TejaratYar Commercial Platform (Iran)`;
                     type="text"
                     value={customsPort}
                     onChange={(e) => setCustomsPort(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -518,7 +522,7 @@ TejaratYar Commercial Platform (Iran)`;
                     type="text"
                     value={targetCustomer}
                     onChange={(e) => setTargetCustomer(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -742,7 +746,7 @@ TejaratYar Commercial Platform (Iran)`;
                 </div>
                 <button
                   onClick={handleCreateAndAdd}
-                  disabled={savingDossier}
+                  disabled={savingDossier || !productFa.trim() || !selectedHsCode}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-60"
                 >
                   <CheckCircle2 className="w-4 h-4" />
@@ -767,7 +771,7 @@ TejaratYar Commercial Platform (Iran)`;
             {currentStep < 3 ? (
               <button
                 onClick={() => setCurrentStep((prev) => Math.min(3, prev + 1))}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-sm shadow-blue-200 flex items-center gap-1.5 transition-colors"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-sm shadow-indigo-200 flex items-center gap-1.5 transition-colors"
               >
                 <span>مرحله بعد</span>
                 <ChevronLeft className="w-4 h-4" />
@@ -775,7 +779,8 @@ TejaratYar Commercial Platform (Iran)`;
             ) : (
               <button
                 onClick={handleCreateAndAdd}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-sm shadow-blue-200 flex items-center gap-1.5 transition-colors"
+                disabled={!productFa.trim() || !selectedHsCode}
+                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2 rounded-xl text-xs font-bold shadow-sm shadow-indigo-200 flex items-center gap-1.5 transition-colors"
               >
                 <span>تکمیل و ورود به انبار</span>
                 <CheckCircle2 className="w-4 h-4" />

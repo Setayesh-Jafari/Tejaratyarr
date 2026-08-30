@@ -8,7 +8,7 @@ import {
   ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ScatterChart, Scatter, ZAxis,
 } from 'recharts';
-import { PieChart as PieIcon, TrendingUp, Layers, Coins, Save, Activity, RefreshCw } from 'lucide-react';
+import { PieChart as PieIcon, TrendingUp, Layers, Coins, Save, Activity, RefreshCw, BarChart3 } from 'lucide-react';
 import { useStore } from '../store/AppStore';
 import { STATUS_FLOW } from '../types';
 import { fmtBillion, fmtPct, fmtTomanSmart } from '../lib/format';
@@ -97,6 +97,63 @@ export const AnalyticsDashboard: React.FC = () => {
     [reval]
   );
 
+  /* حالت خالی صادقانه — بدون هیچ داده‌ی ساختگی، نمودار هم ساخته نمی‌شود */
+  if (inventory.length === 0) {
+    return (
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-0.5">
+        <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 flex flex-col items-center justify-center text-center space-y-3">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-500 flex items-center justify-center">
+            <BarChart3 className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-slate-800">داشبورد تحلیلی شما هنوز خالی است</h3>
+            <p className="text-xs text-slate-500 max-w-md leading-relaxed">
+              پس از ثبت اولین پرونده (از دکمه «کارگوی جدید» یا ویزارد ارزیابی)، نمودارهای سبد،
+              شبیه‌ساز نرخ ارز و ترکیب دسته‌بندی به‌صورت خودکار از داده واقعی شما محاسبه می‌شود.
+            </p>
+          </div>
+        </div>
+
+        {/* تنظیمات نرخ ارز — مستقل از وجود داده، همیشه در دسترس است */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h4 className="text-xs font-bold text-slate-700">تنظیمات نرخ ارز مرجع <span className="text-slate-400 font-medium">(مبنای محاسبات جدید ویزارد و ماشین‌حساب)</span></h4>
+            {fxDirty && (
+              <button
+                onClick={() => saveSettings({ fx: fxDraft })}
+                className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-xl transition-colors"
+              >
+                <Save className="w-3.5 h-3.5" /> ذخیره نرخ‌ها
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+            {([
+              ['usdNimaToman', 'دلار نیما (تومان)', 500],
+              ['usdAzadToman', 'دلار آزاد (تومان)', 500],
+              ['eurToman', 'یورو (تومان)', 500],
+            ] as const).map(([key, label, step]) => (
+              <div key={key} className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500">{label}</label>
+                <input
+                  type="number"
+                  dir="ltr"
+                  step={step}
+                  value={fxDraft[key]}
+                  onChange={(e) => setFxDraft((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-slate-400 mt-2">
+            این نرخ‌ها مبنای محاسبات <span className="font-bold text-slate-500">جدید</span> (ویزارد و ماشین‌حساب) هستند.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-0.5">
       {/* KPIها */}
@@ -157,7 +214,7 @@ export const AnalyticsDashboard: React.FC = () => {
                   const v = Number(e.target.value);
                   setWhatIfFx(Number.isFinite(v) && v > 0 ? v : baseNima);
                 }}
-                className="w-28 text-xs font-mono font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none text-right"
+                className="w-28 text-xs font-mono font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none text-right"
               />
             </div>
             <input
@@ -168,7 +225,7 @@ export const AnalyticsDashboard: React.FC = () => {
               step={500}
               value={whatIfFx}
               onChange={(e) => setWhatIfFx(Number(e.target.value))}
-              className="w-full accent-blue-600"
+              className="w-full accent-indigo-600"
             />
             <div className="flex justify-between text-[9px] text-slate-400 font-mono" dir="ltr">
               <span>{minFx.toLocaleString('en-US')}</span>
@@ -310,7 +367,7 @@ export const AnalyticsDashboard: React.FC = () => {
           {fxDirty && (
             <button
               onClick={() => saveSettings({ fx: fxDraft })}
-              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-xl transition-colors"
+              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-xl transition-colors"
             >
               <Save className="w-3.5 h-3.5" /> ذخیره نرخ‌ها
             </button>
@@ -330,7 +387,7 @@ export const AnalyticsDashboard: React.FC = () => {
                 step={step}
                 value={fxDraft[key]}
                 onChange={(e) => setFxDraft((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
           ))}
