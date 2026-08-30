@@ -6,7 +6,6 @@
  */
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
 import { db, uid } from './server/db';
 import { hsSuggest, supplierCheck, isAiEnabled, modelName } from './server/ai';
 import type { InventoryUnit, SupplierRecord, TradeAssessmentDossier, AppSettings } from './src/types';
@@ -162,6 +161,8 @@ async function startServer() {
   /* ---------------------- Frontend / Vite Serving ------------------- */
 
   if (process.env.NODE_ENV !== 'production') {
+    // vite فقط در حالت توسعه نیاز است؛ ایمپورت داینامیک تا باندل تولید خودکفا بماند
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
