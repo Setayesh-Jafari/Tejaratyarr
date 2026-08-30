@@ -1,0 +1,9 @@
+node_modules
+dist
+data
+.git
+.gitignore
+*.zip
+*.ipynb
+render.yaml
+.DS_Store
